@@ -1,0 +1,64 @@
+#pragma once
+#include <deque>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace cake {
+using std::string_view;
+
+// clang-format off
+enum TokenKind : uint8_t { 
+  INTEGER, FLOAT, IDENTIFIER, 
+  PLUS, MINUS, MUL, DIV, 
+  IF,WHILE,FOR,SWITCH,BREAK,CASE,CONTINUE,
+  LET,FUNCTION,CLASS,
+
+  LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 
+  NIL /*end of file or tokens*/
+};
+// clang-format on
+struct Token {
+  Token(TokenKind _kind, const std::string_view &val, uint32_t l, uint32_t c, uint32_t fno = 0)
+      : kind(_kind), text(val), line(l), col(c), file_no(fno) {}
+
+  static TokenKind get_word_kind(string_view word);
+  int64_t get_int() const { return std::stoi(std::string{text}); }
+  std::string get_file_pos() const;
+  std::string_view text;
+
+  TokenKind kind;
+  // position information
+  uint16_t file_no : 16;
+  uint32_t line : 32;
+  uint16_t col : 16;
+};
+
+class Scanner {
+public:
+  Scanner(std::string _text, std::string filename);
+  Scanner(std::string _text) : text(_text) {}
+
+  Token next_token();
+  Token peek(size_t);
+
+  // lexer error 
+  [[noreturn]] void error(const std::string &msg);
+  std::string get_filename()const;
+private:
+  void skip_space();
+  Token fetch_token();
+
+  Token create_token(TokenKind kind, string_view str);
+
+  int file_idx = 0;
+  std::string text;
+  // current position of text.
+  size_t pos = 0;
+  int line = 1;
+  int col = 1;
+  // to store some scanned tokens.
+  std::deque<Token> buff;
+};
+
+} // namespace cake
