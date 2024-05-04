@@ -6,7 +6,7 @@ include(FetchContent)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-
+add_compile_options("-g")
 # fetch fmt library
 FetchContent_Declare(
   fmt
@@ -15,19 +15,28 @@ FetchContent_Declare(
   GIT_SHALLOW ON)
 FetchContent_MakeAvailable(fmt)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
 set (cake_sources 
   "src/context.cpp"
   "src/lexer.cpp"
+  "src/parser/parser.cpp"
+  "src/parser/expr.cpp"
+  "src/object.cpp"
 )
+
+include_directories(include
+  include/parser
+)
+
 
 add_library(libcake STATIC ${cake_sources})
 target_link_libraries(
   libcake 
   fmt::fmt 
 )
-
+target_include_directories(libcake
+  PUBLIC 
+  "include"
+)
 # build cake
 add_executable(
   ${PROJECT_NAME} 

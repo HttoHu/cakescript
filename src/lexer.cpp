@@ -14,10 +14,28 @@ TokenKind Token::get_word_kind(string_view word) {
     return it->second;
   return TokenKind::IDENTIFIER;
 }
-
+std::string Token::token_kind_str(TokenKind kind) {
+  using enum TokenKind;
+  switch (kind) {
+  case PLUS:
+    return "PLUS";
+  case MINUS:
+    return "MINUS";
+  case MUL:
+    return "MUL";
+  case DIV:
+    return "DIV";
+  case INTEGER:
+    return "INTEGER";
+  default:
+    return "UNKNOWN";
+  }
+}
 std::string Token::get_file_pos() const {
   return fmt::format("{}:{}:{}", Context::global_context()->get_source_file(file_no), line, col);
 }
+
+std::string Token::get_file_name() const { return Context::global_context()->get_source_file(file_no); }
 
 Scanner::Scanner(std::string _text, std::string filename) : text(_text) {
   file_idx = Context::global_context()->add_source_file(filename);
@@ -41,7 +59,10 @@ void Scanner::error(const std::string &msg) {
   std::cerr << fmt::format("{}:{}:{}: lexer error: {}", get_filename(), line, col, msg) << std::endl;
   exit(1);
 }
-
+void Scanner::error(Token tok, const std::string &msg) {
+  std::cerr << fmt::format("{}:{}:{}: {}", tok.get_file_name(), tok.line, tok.col, msg) << std::endl;
+  exit(1);
+}
 std::string Scanner::get_filename() const { return Context::global_context()->get_source_file(file_idx); }
 Token Scanner::fetch_token() {
   skip_space();

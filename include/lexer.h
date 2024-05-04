@@ -17,21 +17,24 @@ enum TokenKind : uint8_t {
   LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 
   NIL /*end of file or tokens*/
 };
+
 // clang-format on
 struct Token {
   Token(TokenKind _kind, const std::string_view &val, uint32_t l, uint32_t c, uint32_t fno = 0)
       : kind(_kind), text(val), line(l), col(c), file_no(fno) {}
 
   static TokenKind get_word_kind(string_view word);
+  static std::string token_kind_str(TokenKind kind);
   int64_t get_int() const { return std::stoi(std::string{text}); }
   std::string get_file_pos() const;
+  std::string get_file_name() const;
   std::string_view text;
 
   TokenKind kind;
   // position information
-  uint16_t file_no : 16;
-  uint32_t line : 32;
-  uint16_t col : 16;
+  uint16_t file_no;
+  uint32_t line;
+  uint16_t col;
 };
 
 class Scanner {
@@ -42,9 +45,13 @@ public:
   Token next_token();
   Token peek(size_t);
 
-  // lexer error 
+  // lexer error
   [[noreturn]] void error(const std::string &msg);
-  std::string get_filename()const;
+  // mainly used for parser, using tok's line and col info
+  [[noreturn]] void error(Token tok, const std::string &msg);
+  std::string get_filename() const;
+  bool reach_to_end() { return peek(0).kind == TokenKind::NIL; }
+
 private:
   void skip_space();
   Token fetch_token();

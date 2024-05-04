@@ -11,16 +11,25 @@ using std::vector;
 class ObjectBase {
 public:
   virtual ~ObjectBase() {}
-  virtual std::string to_string() const;
+  virtual std::string to_string() const { return "undefined"; }
+  // if the result type is matched return result, else return a new object of result
+  virtual ObjectBase *add(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  // ditto
+  virtual ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *div(ObjectBase *rhs, ObjectBase *result) { abort(); }
 
 private:
 };
 class NumberObject : public ObjectBase {
+
 public:
+  using ValType = variant<int64_t, double>;
+
   NumberObject(int64_t val) : data(val) {}
   NumberObject(double val) : data(val) {}
-  NumberObject() : data(std::monostate{}) {}
-  
+  NumberObject() : data((int64_t)0) {}
+
   std::string to_string() const override {
     std::string ret;
     std::visit(
@@ -36,10 +45,26 @@ public:
         data);
     return ret;
   }
+  double to_double() const {
+    if (!data.index())
+      return std::get<int64_t>(data);
+    return std::get<double>(data);
+  }
+
+  int64_t to_int() const {
+    if (!data.index())
+      return std::get<int64_t>(data);
+    return std::get<double>(data);
+  }
+
+  void reset_val(ValType val) { data = val; }
+  ObjectBase *add(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *div(ObjectBase *rhs, ObjectBase *result) override;
 
 private:
-  // if the state is monostate, the value is NaN
-  variant<std::monostate, int64_t, double> data;
+  ValType data;
 };
 class StringObject : public ObjectBase {};
 

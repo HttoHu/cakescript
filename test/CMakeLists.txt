@@ -10,6 +10,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(unit
   ./lexer_test.cpp
+  ./parser/expr_test.cpp
 )
 target_link_libraries(unit 
   GTest::gtest_main
