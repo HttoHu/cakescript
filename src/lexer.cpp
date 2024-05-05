@@ -83,6 +83,18 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::LPAR, "(");
   case ')':
     return create_token(TokenKind::RPAR, ")");
+  case '[':
+    return create_token(TokenKind::LSB, "[");
+  case ']':
+    return create_token(TokenKind::RSB, "]");
+  case '{':
+    return create_token(TokenKind::BEGIN, "{");
+  case '}':
+    return create_token(TokenKind::END, "}");
+  case ',':
+    return create_token(TokenKind::COMMA, ",");
+  case ':':
+    return create_token(TokenKind::COLON, ":");
   default: {
     if (isdigit(ch)) {
       int len = 1;

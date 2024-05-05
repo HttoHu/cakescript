@@ -1,9 +1,12 @@
 #pragma once
+#include <map>
 #include <object.h>
 #include <parser/ast_node.h>
+
 #include <fmt/format.h>
 
 namespace cake {
+using std::map;
 class BinOp : public AstNode {
 public:
   BinOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
@@ -26,12 +29,14 @@ public:
   std::string to_string() const override {
     return fmt::format("({} {})", Token::token_kind_str(unary_op), expr->to_string());
   }
+
 private:
   TokenKind unary_op;
   AstNodePtr expr;
   ObjectBase *result_tmp;
 };
 
+// Number literal or string literal
 class Literal : public AstNode {
 public:
   Literal(Token lit);
@@ -40,6 +45,40 @@ public:
 
 private:
   ObjectBase *result_tmp;
+};
+
+class ObjectNode : public AstNode {
+public:
+  ObjectNode(map<std::string, AstNodePtr> _object) : object(std::move(_object)) {}
+  std::string to_string() const override {
+    std::string ret = "(object {";
+    for (auto &[name, val] : object) {
+      ret += name + ":" + val->to_string() + ",";
+    }
+    if (object.size())
+      ret.back() = '}';
+    return ret + ")";
+  }
+
+private:
+  map<std::string, AstNodePtr> object;
+};
+
+class ArrayNode : public AstNode {
+public:
+  ArrayNode(std::vector<AstNodePtr> &&_nodes) : nodes(std::move(_nodes)) {}
+  std::string to_string() const override {
+    std::string ret = "(array [";
+    for (auto &node : nodes) {
+      ret += node->to_string() + ",";
+    }
+    if (nodes.size())
+      ret.back() = ']';
+    return ret+")";
+  }
+
+private:
+  std::vector<AstNodePtr> nodes;
 };
 
 } // namespace cake

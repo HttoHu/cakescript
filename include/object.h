@@ -12,6 +12,7 @@ class ObjectBase {
 public:
   virtual ~ObjectBase() {}
   virtual std::string to_string() const { return "undefined"; }
+  virtual ObjectBase *clone() const {abort();}
   // if the result type is matched return result, else return a new object of result
   virtual ObjectBase *add(ObjectBase *rhs, ObjectBase *result) { abort(); }
   // ditto

@@ -58,6 +58,33 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
 AstNodePtr Parser::parse_unit() {
   auto tok = lexer.next_token();
   switch (tok.kind) {
+  // parse array
+  case TokenKind::LSB: {
+    std::vector<AstNodePtr> nodes;
+    while (!lexer.reach_to_end() && lexer.peek(0).kind != RSB) {
+      nodes.push_back(parse_expr());
+      if (peek(0).kind != RSB)
+        match(COMMA);
+    }
+    match(RSB);
+    return make_unique<ArrayNode>(std::move(nodes));
+  }
+  // parse object
+  case TokenKind::BEGIN: {
+    std::map<std::string, AstNodePtr> object_list;
+    while (!lexer.reach_to_end() && lexer.peek(0).kind != END) {
+      auto key = lexer.peek(0);
+      // have not supported string key yet.
+      match(IDENTIFIER);
+      match(COLON);
+      auto val = parse_expr();
+      object_list.insert({std::string{key.text}, std::move(val)});
+      if (peek(0).kind != END)
+        match(COMMA);
+    }
+    match(END);
+    return make_unique<ObjectNode>(std::move(object_list));
+  }
   case TokenKind::INTEGER:
     return make_unique<cake::Literal>(tok);
   case TokenKind::LPAR: {

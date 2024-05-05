@@ -3,6 +3,8 @@
 #include <lexer.h>
 
 using namespace cake;
+#ifndef DISABLE_UNIT
+
 TEST(lexerTest, simpleCase) {
   Scanner scanner("145/**/+ cat\nbbk");
 #define TEST_TOKEN(idx, KIND, TEXT, LINE, COL)                                                                         \
@@ -22,3 +24,4 @@ TEST(lexerTest, simpleCase) {
 
 #undef TEST_TOKEN
 }
+#endif

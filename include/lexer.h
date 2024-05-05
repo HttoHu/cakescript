@@ -15,6 +15,8 @@ enum TokenKind : uint8_t {
   LET,FUNCTION,CLASS,
 
   LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 
+  BEGIN,END, // {}
+  SEMI,COLON,COMMA, // ; : ,
   NIL /*end of file or tokens*/
 };
 
