@@ -7,8 +7,11 @@
 namespace cake {
 
 TokenKind Token::get_word_kind(string_view word) {
-  const std::unordered_map<string_view, TokenKind> tab = {
-      {"if", TokenKind::IF}, {"while", TokenKind::WHILE}, {"for", TokenKind::FOR}};
+  const std::unordered_map<string_view, TokenKind> tab = {{"if", TokenKind::IF},
+                                                          {"while", TokenKind::WHILE},
+                                                          {"for", TokenKind::FOR},
+                                                          {"let", TokenKind::LET},
+                                                          {"function", TokenKind::FUNCTION}};
   auto it = tab.find(word);
   if (it != tab.end())
     return it->second;
@@ -95,6 +98,10 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::COMMA, ",");
   case ':':
     return create_token(TokenKind::COLON, ":");
+  case ';':
+    return create_token(TokenKind::SEMI, ";");
+  case '=':
+    return create_token(TokenKind::ASSIGN, "=");
   default: {
     if (isdigit(ch)) {
       int len = 1;
@@ -110,7 +117,7 @@ Token Scanner::fetch_token() {
       string_view slice = string_view{text}.substr(pos - len, len);
       return create_token(Token::get_word_kind(slice), slice);
     } else {
-      error(fmt::format("unexpected charater {}", text[pos]));
+      error(fmt::format("unexpected charater {}", ch));
     }
   }
   }

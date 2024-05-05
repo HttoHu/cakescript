@@ -11,6 +11,7 @@ using std::string_view;
 enum TokenKind : uint8_t { 
   INTEGER, FLOAT, IDENTIFIER, 
   PLUS, MINUS, MUL, DIV, 
+  ASSIGN,
   IF,WHILE,FOR,SWITCH,BREAK,CASE,CONTINUE,
   LET,FUNCTION,CLASS,
 

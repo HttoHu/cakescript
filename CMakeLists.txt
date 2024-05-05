@@ -20,6 +20,7 @@ set (cake_sources
   "src/lexer.cpp"
   "src/parser/parser.cpp"
   "src/parser/expr.cpp"
+  "src/parser/decl.cpp"
   "src/object.cpp"
 )
 
