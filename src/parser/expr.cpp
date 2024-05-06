@@ -1,6 +1,8 @@
+#include <context.h>
 #include <map>
 #include <parser/expr.h>
 #include <parser/parser.h>
+#include <parser/symbol.h>
 #include <utils.h>
 
 namespace cake {
@@ -16,6 +18,7 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
       {TokenKind::MINUS, {4, true}},
       {TokenKind::MUL, {3, true}},
       {TokenKind::DIV, {3, true}},
+      {TokenKind::ASSIGN, {16,false} }
   };
   // clang-format on
   auto get_pred = [&](TokenKind tag) -> std::pair<int, bool> {
@@ -28,10 +31,10 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
   auto left = parse_expr_imp(ppred - 1);
 
   std::vector<AstNodePtr> nodes;
-  std::vector<TokenKind> ops;
+  std::vector<Token> ops;
   nodes.push_back(std::move(left));
   while (!lexer.reach_to_end() && get_pred(lexer.peek(0).kind).first == ppred) {
-    auto op = ctok_kind();
+    auto op = peek(0);
     lexer.next_token();
 
     ops.push_back(op);
@@ -42,16 +45,20 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
   if (nodes.size() == 1)
     return std::move(nodes.front());
   // left to right
-  if (get_pred(ops.back()).second) {
+  if (get_pred(ops.back().kind).second) {
     AstNodePtr root = std::move(nodes.front());
     for (int i = 1; i < nodes.size(); i++)
-      root = make_unique<BinOp>(std::move(root), ops[i - 1], std::move(nodes[i]));
+      root = make_unique<BinOp>(std::move(root), ops[i - 1].kind, std::move(nodes[i]));
     return root;
   } else {
     // right to left
     AstNodePtr root = std::move(nodes.back());
-    for (int i = ops.size() - 2; i >= 0; i--)
-      root = make_unique<BinOp>(std::move(nodes[i]), ops[i], std::move(root));
+    // the size of ops = nodes.size()-1
+    for (int i = ops.size() - 1; i >= 0; i--) {
+      if (ppred == 16 && !nodes[i]->left_value()) 
+        syntax_error("assign operation expect left value in the left side!", ops[i]);
+      root = make_unique<BinOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
+    }
     return root;
   }
 }
@@ -68,6 +75,16 @@ AstNodePtr Parser::parse_unit() {
     }
     match(RSB);
     return make_unique<ArrayNode>(std::move(nodes));
+  }
+  case TokenKind::IDENTIFIER: {
+    auto sym = Context::global_symtab()->find_symbol(tok.text);
+    if (!sym)
+      syntax_error("undefined symbol " + std::string{tok.text}, tok);
+    if (sym->get_kind() == SYM_VAR) {
+      return make_unique<Variable>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
+    } else
+      syntax_error("unsupported symbol kind ");
+    break;
   }
   // parse object
   case TokenKind::BEGIN: {

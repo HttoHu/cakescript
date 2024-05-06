@@ -40,6 +40,14 @@ private:
   std::vector<AstNode *> use_list;
 };
 
+class VarSymbol : public Symbol {
+public:
+  VarSymbol(size_t _pos, std::string_view name) : Symbol(SYM_VAR, name, nullptr), stac_pos(_pos) {}
+  size_t get_stac_pos() const { return stac_pos; }
+
+private:
+  size_t stac_pos;
+};
 class SymbolTable {
 public:
   SymbolTable() : symbol_table(1) {}

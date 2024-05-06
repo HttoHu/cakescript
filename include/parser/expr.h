@@ -13,6 +13,7 @@ public:
       : left(std::move(_left)), right(std::move(_right)), op(_op) {
     result_tmp = new NumberObject();
   }
+  bool left_value() const override { return op == TokenKind::ASSIGN; }
   ObjectBase *eval() override;
   std::string to_string() const override {
     return fmt::format("({} {} {})", Token::token_kind_str(op), left->to_string(), right->to_string());
@@ -47,6 +48,17 @@ private:
   ObjectBase *result_tmp;
 };
 
+class Variable : public AstNode {
+public:
+  Variable(Token _id, size_t _stac_pos) : id(_id), stac_pos(_stac_pos) {}
+  std::string to_string() const override { return fmt::format("{}({})", id.text, stac_pos); }
+  bool left_value() const override { return true; }
+
+private:
+  Token id;
+  size_t stac_pos;
+};
+
 class ObjectNode : public AstNode {
 public:
   ObjectNode(map<std::string, AstNodePtr> _object) : object(std::move(_object)) {}
@@ -74,7 +86,7 @@ public:
     }
     if (nodes.size())
       ret.back() = ']';
-    return ret+")";
+    return ret + ")";
   }
 
 private:

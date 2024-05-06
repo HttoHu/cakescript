@@ -11,8 +11,14 @@ public:
 
   // current token tag.
   TokenKind ctok_kind() { return peek(0).kind; }
+
+  std::vector<AstNodePtr> parse_stmts();
+
   AstNodePtr parse_stmt();
-  AstNodePtr parse_expr(){return parse_expr_imp(4);}
+  AstNodePtr parse_expr() { return parse_expr_imp(16); }
+  [[noreturn]] void syntax_error(const std::string &error_info);
+  [[noreturn]] void syntax_error(const std::string &error_info, Token tok);
+
 private:
   Scanner lexer;
   AstNodePtr parse_unit();

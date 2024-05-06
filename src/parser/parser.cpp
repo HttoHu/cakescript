@@ -8,7 +8,13 @@ Token Parser::match(TokenKind kind) {
     lexer.error(tok, fmt::format("unexpected token {}", tok.text));
   return tok;
 }
-
+std::vector<AstNodePtr> Parser::parse_stmts(){
+  std::vector<AstNodePtr> ret;
+  while(peek(0).kind!=NIL && peek(0).kind!=END){
+    ret.emplace_back(parse_stmt());
+  }
+  return ret;
+}
 AstNodePtr Parser::parse_stmt() {
   AstNodePtr ret;
   switch (peek(0).kind) {
@@ -27,5 +33,13 @@ AstNodePtr Parser::parse_stmt() {
   if (peek(0).kind == SEMI)
     match(SEMI);
   return ret;
+}
+
+void Parser::syntax_error(const std::string &error_info) {
+  throw std::runtime_error(fmt::format("syntax error: {}:{} ", peek(0).get_file_pos(), error_info));
+}
+
+void Parser::syntax_error(const std::string &error_info,Token tok) {
+  throw std::runtime_error(fmt::format("syntax error: {}:{} ", tok.get_file_pos(), error_info));
 }
 } // namespace cake

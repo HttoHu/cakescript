@@ -28,6 +28,8 @@ std::string Token::token_kind_str(TokenKind kind) {
     return "MUL";
   case DIV:
     return "DIV";
+  case ASSIGN:
+    return "ASSIGN";
   case INTEGER:
     return "INTEGER";
   default:

@@ -19,7 +19,7 @@ AstNodePtr Parser::parse_decl() {
       }
       vu.stac_index = Context::global_symtab()->cblk_vcnt();
       // add this var to symbol table
-      Context::global_symtab()->add_symbol(sym.text, new Symbol(SymbolKind::SYM_VAR, sym.text));
+      Context::global_symtab()->add_symbol(sym.text, new VarSymbol(vu.stac_index, sym.text));
       ret->add_unit(std::move(vu));
       if (peek(0).kind != COMMA)
         break;
