@@ -3,6 +3,7 @@
 #include <parser/expr.h>
 #include <parser/parser.h>
 #include <parser/symbol.h>
+#include <runtime/mem.h>
 #include <utils.h>
 
 namespace cake {
@@ -55,7 +56,7 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
     AstNodePtr root = std::move(nodes.back());
     // the size of ops = nodes.size()-1
     for (int i = ops.size() - 1; i >= 0; i--) {
-      if (ppred == 16 && !nodes[i]->left_value()) 
+      if (ppred == 16 && !nodes[i]->left_value())
         syntax_error("assign operation expect left value in the left side!", ops[i]);
       root = make_unique<BinOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
     }
@@ -115,7 +116,7 @@ AstNodePtr Parser::parse_unit() {
 }
 
 ObjectBase *BinOp::eval() {
-  auto lval = left->eval(), rval = left->eval();
+  auto lval = left->eval(), rval = right->eval();
   switch (op) {
   case TokenKind::PLUS: {
     auto res = lval->add(rval, result_tmp);
@@ -149,6 +150,8 @@ ObjectBase *BinOp::eval() {
     }
     break;
   }
+  case TokenKind::ASSIGN: {
+  }
   default:
     abort();
   }
@@ -161,4 +164,19 @@ Literal::Literal(Token lit) {
   } else
     unreachable();
 }
+
+ObjectBase *AssignOp::eval() {
+  auto ret = right->eval();
+  switch (op) {
+  
+  case ASSIGN:
+    *left->get_left_val() = ret->clone();
+    break;
+  default:
+    unreachable();
+  }
+  return ret;
+}
+
+ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
 } // namespace cake

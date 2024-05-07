@@ -20,7 +20,7 @@ static std::string parse_blocks(const std::string &str) {
   }
   return ret;
 }
-#ifdef DISABLE_UNIT
+#ifndef DISABLE_UNIT
 TEST(parserTest, DeclTest1) {
   EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(vardecl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
   EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(vardecl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
@@ -37,5 +37,11 @@ TEST(parserTest, DeclTest1) {
               "syntax error: unknown file!:4:4:assign operation expect left value in the left side! ");
   }
   EXPECT_TRUE(ok);
+}
+
+TEST(parserTest, DeclTest2) {
+
+
+
 }
 #endif

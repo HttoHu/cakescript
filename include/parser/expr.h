@@ -18,6 +18,10 @@ public:
   std::string to_string() const override {
     return fmt::format("({} {} {})", Token::token_kind_str(op), left->to_string(), right->to_string());
   }
+  ~BinOp() {
+    if (result_tmp)
+      delete result_tmp;
+  }
 
 private:
   AstNodePtr left, right;
@@ -25,6 +29,16 @@ private:
   ObjectBase *result_tmp;
 };
 
+class AssignOp : public AstNode {
+public:
+  bool left_value() const override { return true; }
+  bool need_delete_eval_object() const override { return right->need_delete_eval_object(); }
+  ObjectBase *eval() override;
+
+private:
+  TokenKind op;
+  AstNodePtr left, right;
+};
 class UnaryOp : public AstNode {
 public:
   std::string to_string() const override {
@@ -43,6 +57,10 @@ public:
   Literal(Token lit);
   ObjectBase *eval() override { return result_tmp; }
   std::string to_string() const override { return result_tmp->to_string(); }
+  ~Literal() {
+    if (result_tmp)
+      delete result_tmp;
+  }
 
 private:
   ObjectBase *result_tmp;
@@ -53,6 +71,7 @@ public:
   Variable(Token _id, size_t _stac_pos) : id(_id), stac_pos(_stac_pos) {}
   std::string to_string() const override { return fmt::format("{}({})", id.text, stac_pos); }
   bool left_value() const override { return true; }
+  ObjectBase *eval() override;
 
 private:
   Token id;

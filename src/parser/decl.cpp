@@ -2,7 +2,7 @@
 #include <fmt/format.h>
 #include <parser/decl.h>
 #include <parser/symbol.h>
-
+#include <runtime/mem.h>
 namespace cake {
 AstNodePtr Parser::parse_decl() {
   switch (peek(0).kind) {
@@ -44,5 +44,16 @@ std::string VarDecl::to_string() const {
   }
   ret += ')';
   return ret;
+}
+
+ObjectBase *VarDecl::eval() {
+  for (auto &unit : var_decls) {
+    auto val = unit.init_expr->eval();
+    if (unit.init_expr->need_delete_eval_object())
+      Memory::gmem.get_local(unit.stac_index) = val;
+    else
+      Memory::gmem.get_local(unit.stac_index) = val->clone();
+  }
+  return nullptr;
 }
 } // namespace cake

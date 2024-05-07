@@ -24,4 +24,15 @@ void Context::clear() {
   source_file_list.resize(1);
 }
 size_t Context::cblk_vcnt() const { return sym_tab->cblk_vcnt(); }
+
+void Context::run() {
+  for (auto &stmt : global_stmts) {
+    if (stmt->need_delete_eval_object())
+      delete stmt->eval();
+    else
+      stmt->eval();
+  }
+}
+
+void Context::set_global_stmts(std::vector<AstNodePtr> stmts) { global_stmts = std::move(stmts); }
 } // namespace cake

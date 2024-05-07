@@ -6,14 +6,14 @@ namespace cake {
   auto rs = dynamic_cast<NumberObject *>(result);                                                                      \
   if (!rs)                                                                                                             \
     rs = new NumberObject();                                                                                           \
-  if ((data.index() & rv->data.index()) == 0b00)                                                                       \
-    rs->reset_val(std::get<int64_t>(data) OP std::get<int64_t>(rs->data));                                             \
+  if ((data.index() | rv->data.index()) == 0b00)                                                                       \
+    rs->reset_val(std::get<int64_t>(data) OP std::get<int64_t>(rv->data));                                             \
   else if ((data.index() & rv->data.index()) == 0b01)                                                                  \
-    rs->reset_val(std::get<double>(data) OP std::get<double>(rs->data));                                               \
+    rs->reset_val(std::get<double>(data) OP std::get<double>(rv->data));                                               \
   else if (data.index() == 0)                                                                                          \
-    rs->reset_val(std::get<int64_t>(data) OP std::get<double>(rs->data));                                              \
+    rs->reset_val(std::get<int64_t>(data) OP std::get<double>(rv->data));                                              \
   else                                                                                                                 \
-    rs->reset_val(std::get<double>(data) OP std::get<int64_t>(rs->data));                                              \
+    rs->reset_val(std::get<double>(data) OP std::get<int64_t>(rv->data));                                              \
   return rs
 
 ObjectBase *NumberObject::add(ObjectBase *rhs, ObjectBase *result) {
