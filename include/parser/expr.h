@@ -31,9 +31,12 @@ private:
 
 class AssignOp : public AstNode {
 public:
+  AssignOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
+      : left(std::move(_left)), op(_op), right(std::move(_right)) {}
   bool left_value() const override { return true; }
   bool need_delete_eval_object() const override { return right->need_delete_eval_object(); }
   ObjectBase *eval() override;
+  std::string to_string() const override;
 
 private:
   TokenKind op;
@@ -72,7 +75,7 @@ public:
   std::string to_string() const override { return fmt::format("{}({})", id.text, stac_pos); }
   bool left_value() const override { return true; }
   ObjectBase *eval() override;
-
+  ObjectBase** get_left_val() override;
 private:
   Token id;
   size_t stac_pos;

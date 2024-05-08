@@ -1,6 +1,11 @@
 #include <context.h>
 #include <gtest/gtest.h>
 #include <parser/decl.h>
+#include <parser/symbol.h>
+#include <runtime/mem.h>
+
+using namespace cake;
+
 static std::string parse_text(const std::string &str) {
   cake::Scanner scanner(str);
   cake::Parser parser(std::move(scanner));
@@ -38,10 +43,47 @@ TEST(parserTest, DeclTest1) {
   }
   EXPECT_TRUE(ok);
 }
+#endif
+cake::ObjectBase *get_var_val(std::string name) {
+  auto sym = Context::global_symtab()->find_symbol(name);
+  if (!sym)
+    return nullptr;
+  auto var_sym = dynamic_cast<VarSymbol *>(sym);
+  if (!var_sym)
+    return nullptr;
+  return Memory::gmem.get_local(var_sym->get_stac_pos());
+}
 
 TEST(parserTest, DeclTest2) {
 
+  std::string text = R"(
+let a = 34,b=1;
+a=b+1;
+b=a-3;
+a=a+b*3;
+let c = a;
+c=b-3*a;
+)";
 
+  cake::Scanner scanner(text);
+  cake::Parser parser(std::move(scanner));
+  auto nodes = parser.parse_stmts();
+  Memory::gmem.new_block(cake::Context::global_context()->cblk_vcnt());
+  EXPECT_EQ(nodes[0]->eval(), nullptr);
+  EXPECT_EQ(get_var_val("a")->to_string(), "34");
+  EXPECT_EQ(get_var_val("b")->to_string(), "1");
 
+  EXPECT_EQ(nodes[1]->eval()->to_string(), std::string{"2"});
+  EXPECT_EQ(get_var_val("a")->to_string(), "2");
+  EXPECT_EQ(get_var_val("b")->to_string(), "1");
+
+  EXPECT_EQ(nodes[2]->eval()->to_string(), std::string{"-1"});
+  EXPECT_EQ(nodes[3]->eval()->to_string(), std::string{"-1"});
+  EXPECT_EQ(nodes[4]->eval(), nullptr);
+  EXPECT_EQ(nodes[5]->eval()->to_string(), "2");
+  EXPECT_EQ(get_var_val("a")->to_string(), "-1");
+  EXPECT_EQ(get_var_val("b")->to_string(), "-1");
+  EXPECT_EQ(get_var_val("c")->to_string(), "2");
+  Memory::gmem.clear();
+  Context::global_context()->clear();
 }
-#endif

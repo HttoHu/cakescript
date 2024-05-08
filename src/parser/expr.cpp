@@ -56,9 +56,13 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
     AstNodePtr root = std::move(nodes.back());
     // the size of ops = nodes.size()-1
     for (int i = ops.size() - 1; i >= 0; i--) {
-      if (ppred == 16 && !nodes[i]->left_value())
-        syntax_error("assign operation expect left value in the left side!", ops[i]);
-      root = make_unique<BinOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
+      if (ppred == 16) {
+        if (!nodes[i]->left_value())
+          syntax_error("assign operation expect left value in the left side!", ops[i]);
+        else
+          root = make_unique<AssignOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
+      } else
+        root = make_unique<BinOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
     }
     return root;
   }
@@ -168,7 +172,7 @@ Literal::Literal(Token lit) {
 ObjectBase *AssignOp::eval() {
   auto ret = right->eval();
   switch (op) {
-  
+
   case ASSIGN:
     *left->get_left_val() = ret->clone();
     break;
@@ -177,6 +181,17 @@ ObjectBase *AssignOp::eval() {
   }
   return ret;
 }
-
+std::string AssignOp::to_string() const {
+  switch (op) {
+  case ASSIGN:
+    return "(ASSIGN " + left->to_string() + " " + right->to_string() + ")";
+  default:
+    return "(unknown assign op)";
+  }
+}
 ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
+
+ObjectBase** Variable::get_left_val(){
+  return &Memory::gmem.get_local(stac_pos);
+}
 } // namespace cake

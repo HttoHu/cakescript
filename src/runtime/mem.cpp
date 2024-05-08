@@ -24,7 +24,13 @@ void Memory::end_block() {
   sp -= block_size_vec.back();
 }
 
-void Memory::clear(){
-  
+void Memory::clear() {
+  for (auto it : pool)
+    if (it)
+      delete it;
+  pool.clear();
+  sp = 0;
+  block_size_vec.resize(1);
+  block_size_vec.back() = 0;
 }
 } // namespace cake
