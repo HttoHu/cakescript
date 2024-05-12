@@ -1,6 +1,8 @@
+#include <context.h>
 #include <fmt/format.h>
+#include <parser/loop_branch.h>
 #include <parser/parser.h>
-
+#include <parser/symbol.h>
 namespace cake {
 Token Parser::match(TokenKind kind) {
   auto tok = lexer.next_token();
@@ -8,12 +10,30 @@ Token Parser::match(TokenKind kind) {
     lexer.error(tok, fmt::format("unexpected token {}", tok.text));
   return tok;
 }
-std::vector<AstNodePtr> Parser::parse_stmts(){
+std::vector<AstNodePtr> Parser::parse_stmts() {
   std::vector<AstNodePtr> ret;
-  while(peek(0).kind!=NIL && peek(0).kind!=END){
+  while (peek(0).kind != NIL && peek(0).kind != END) {
     ret.emplace_back(parse_stmt());
   }
   return ret;
+}
+
+std::vector<AstNodePtr> Parser::parse_block() {
+  Context::global_symtab()->new_block();
+  bool have_begin = false;
+  if (peek(0).kind == BEGIN) {
+    match(BEGIN);
+    auto ret = parse_stmts();
+    match(END);
+    Context::global_symtab()->end_block();
+    return ret;
+  } else {
+    auto stmt = parse_stmt();
+    Context::global_symtab()->end_block();
+    std::vector<AstNodePtr> ret;
+    ret.push_back(std::move(stmt));
+    return ret;
+  }
 }
 AstNodePtr Parser::parse_stmt() {
   AstNodePtr ret;
@@ -27,6 +47,10 @@ AstNodePtr Parser::parse_stmt() {
   case INTEGER:
     ret = parse_expr();
     break;
+  case IF:
+    return parse_if();
+  case WHILE:
+    return parse_while();
   default:
     unreachable();
   }
@@ -39,7 +63,7 @@ void Parser::syntax_error(const std::string &error_info) {
   throw std::runtime_error(fmt::format("syntax error: {}:{} ", peek(0).get_file_pos(), error_info));
 }
 
-void Parser::syntax_error(const std::string &error_info,Token tok) {
+void Parser::syntax_error(const std::string &error_info, Token tok) {
   throw std::runtime_error(fmt::format("syntax error: {}:{} ", tok.get_file_pos(), error_info));
 }
 } // namespace cake

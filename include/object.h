@@ -13,12 +13,15 @@ public:
   virtual ~ObjectBase() {}
   virtual std::string to_string() const { return "undefined"; }
   virtual ObjectBase *clone() const { abort(); }
+  virtual bool is_true() const { abort(); }
   // if the result type is matched return result, else return a new object of result
   virtual ObjectBase *add(ObjectBase *rhs, ObjectBase *result) { abort(); }
   // ditto
   virtual ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *div(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) { abort(); }
 
 private:
 };
@@ -26,10 +29,16 @@ class NumberObject : public ObjectBase {
 public:
   using ValType = variant<int64_t, double>;
   NumberObject(ValType val) : data(val) {}
-
   NumberObject(int64_t val) : data(val) {}
   NumberObject(double val) : data(val) {}
   NumberObject() : data((int64_t)0) {}
+
+  bool is_true() const override {
+    if (!data.index())
+      return std::get<int64_t>(data);
+    else
+      return std::get<double>(data);
+  }
 
   std::string to_string() const override {
     std::string ret;
@@ -63,7 +72,8 @@ public:
   ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *div(ObjectBase *rhs, ObjectBase *result) override;
-
+  ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *clone() const override { return new NumberObject(data); }
 
 private:

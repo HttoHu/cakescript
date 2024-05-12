@@ -2,8 +2,10 @@
 #include <runtime/mem.h>
 
 namespace cake {
-Memory::Memory() : block_size_vec({0}) {}
+Memory::Memory() : block_size_vec(1) {}
 Memory Memory::gmem;
+int Memory::pc = 0;
+
 void Memory::new_block(int blk_size) {
   sp += block_size_vec.back();
   block_size_vec.push_back(blk_size);

@@ -10,7 +10,7 @@ class Memory {
 public:
   Memory();
   static Memory gmem;
-
+  static int pc;
   void new_block(int blk_size);
   void end_block();
   ObjectBase *&get_local(int offset) { return pool[sp + offset]; }

@@ -11,6 +11,7 @@ TokenKind Token::get_word_kind(string_view word) {
                                                           {"while", TokenKind::WHILE},
                                                           {"for", TokenKind::FOR},
                                                           {"let", TokenKind::LET},
+                                                          {"else", TokenKind::ELSE},
                                                           {"function", TokenKind::FUNCTION}};
   auto it = tab.find(word);
   if (it != tab.end())
@@ -32,6 +33,10 @@ std::string Token::token_kind_str(TokenKind kind) {
     return "ASSIGN";
   case INTEGER:
     return "INTEGER";
+  case EQ:
+    return "EQ";
+  case NE:
+    return "NE";
   default:
     return "UNKNOWN";
   }
@@ -102,8 +107,23 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::COLON, ":");
   case ';':
     return create_token(TokenKind::SEMI, ";");
-  case '=':
+  case '<':
+    if (pos < text.size() && text[pos] == '=' && ++pos)
+      return create_token(TokenKind::LE, "<=");
+    return create_token(TokenKind::LT, "<");
+  case '>':
+    if (pos < text.size() && text[pos] == '=' && ++pos)
+      return create_token(TokenKind::GE, ">=");
+    return create_token(TokenKind::GT, ">");
+  case '!':
+    if (pos < text.size() && text[pos] == '=' && ++pos)
+      return create_token(TokenKind::NE, "!=");
+    return create_token(TokenKind::NOT, "!");
+  case '=': {
+    if (pos < text.size() && text[pos] == '=' && ++pos)
+      return create_token(TokenKind::EQ, "==");
     return create_token(TokenKind::ASSIGN, "=");
+  }
   default: {
     if (isdigit(ch)) {
       int len = 1;

@@ -21,6 +21,7 @@ set (cake_sources
   "src/parser/parser.cpp"
   "src/parser/expr.cpp"
   "src/parser/decl.cpp"
+  "src/parser/loop_branch.cpp"
   "src/object.cpp"
   "src/runtime/mem.cpp"
 )

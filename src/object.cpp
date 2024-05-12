@@ -49,6 +49,20 @@ ObjectBase *NumberObject::div(ObjectBase *rhs, ObjectBase *result) {
     unreachable();
   }
 }
+ObjectBase *NumberObject::eq(ObjectBase *rhs, ObjectBase *result) {
+  if (auto rv = dynamic_cast<NumberObject *>(rhs)) {
+    NUMBER_BINOP(==);
+  } else {
+    unreachable();
+  }
+}
 
+ObjectBase *NumberObject::ne(ObjectBase *rhs, ObjectBase *result) {
+  if (auto rv = dynamic_cast<NumberObject *>(rhs)) {
+    NUMBER_BINOP(!=);
+  } else {
+    unreachable();
+  }
+}
 #undef NUMBER_BINOP
 } // namespace cake

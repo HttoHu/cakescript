@@ -19,6 +19,12 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
       {TokenKind::MINUS, {4, true}},
       {TokenKind::MUL, {3, true}},
       {TokenKind::DIV, {3, true}},
+      {TokenKind::LE,{9,true}},
+      {TokenKind::LT,{9,true}},
+      {TokenKind::GE,{9,true}},
+      {TokenKind::GT,{9,true}},
+      {TokenKind::EQ,{10,false}},
+      {TokenKind::NE,{10,false}},
       {TokenKind::ASSIGN, {16,false} }
   };
   // clang-format on
@@ -121,41 +127,23 @@ AstNodePtr Parser::parse_unit() {
 
 ObjectBase *BinOp::eval() {
   auto lval = left->eval(), rval = right->eval();
+#define BIN_OP_MP(TAG, OP)                                                                                             \
+  case TokenKind::TAG: {                                                                                             \
+    auto res = lval->OP(rval, result_tmp);                                                                           \
+    if (result_tmp != res) {                                                                                           \
+      delete result_tmp;                                                                                               \
+      result_tmp = res;                                                                                                \
+    }                                                                                                                  \
+    break;                                                                                                             \
+  }
+
   switch (op) {
-  case TokenKind::PLUS: {
-    auto res = lval->add(rval, result_tmp);
-    if (result_tmp != res) {
-      delete result_tmp;
-      result_tmp = res;
-    }
-    break;
-  }
-  case TokenKind::MINUS: {
-    auto res = lval->sub(rval, result_tmp);
-    if (result_tmp != res) {
-      delete result_tmp;
-      result_tmp = res;
-    }
-    break;
-  }
-  case TokenKind::MUL: {
-    auto res = lval->mul(rval, result_tmp);
-    if (result_tmp != res) {
-      delete result_tmp;
-      result_tmp = res;
-    }
-    break;
-  }
-  case TokenKind::DIV: {
-    auto res = lval->div(rval, result_tmp);
-    if (result_tmp != res) {
-      delete result_tmp;
-      result_tmp = res;
-    }
-    break;
-  }
-  case TokenKind::ASSIGN: {
-  }
+    BIN_OP_MP(PLUS, add)
+    BIN_OP_MP(MUL,mul)
+    BIN_OP_MP(MINUS,sub)
+    BIN_OP_MP(DIV,div)
+    BIN_OP_MP(EQ,eq)
+    BIN_OP_MP(NE,ne)
   default:
     abort();
   }
@@ -191,7 +179,5 @@ std::string AssignOp::to_string() const {
 }
 ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
 
-ObjectBase** Variable::get_left_val(){
-  return &Memory::gmem.get_local(stac_pos);
-}
+ObjectBase **Variable::get_left_val() { return &Memory::gmem.get_local(stac_pos); }
 } // namespace cake

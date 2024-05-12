@@ -23,7 +23,7 @@ void Context::clear() {
   sym_tab->clear();
   source_file_list.resize(1);
 }
-size_t Context::cblk_vcnt() const { return sym_tab->cblk_vcnt(); }
+size_t Context::cblk_vcnt() const { return sym_tab->cfunc_vcnt(); }
 
 void Context::run() {
   for (auto &stmt : global_stmts) {

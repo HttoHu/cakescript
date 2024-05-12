@@ -17,7 +17,7 @@ AstNodePtr Parser::parse_decl() {
         auto expr = parse_expr();
         vu.init_expr = std::move(expr);
       }
-      vu.stac_index = Context::global_symtab()->cblk_vcnt();
+      vu.stac_index = Context::global_symtab()->cfunc_vcnt();
       // add this var to symbol table
       Context::global_symtab()->add_symbol(sym.text, new VarSymbol(vu.stac_index, sym.text));
       ret->add_unit(std::move(vu));

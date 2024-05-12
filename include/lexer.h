@@ -12,7 +12,10 @@ enum TokenKind : uint8_t {
   INTEGER, FLOAT, IDENTIFIER, 
   PLUS, MINUS, MUL, DIV, 
   ASSIGN,
-  IF,WHILE,FOR,SWITCH,BREAK,CASE,CONTINUE,
+  LE,LT,GE,GT,EQ,NE, // compare operations
+  AND,OR, // logical operations
+  NOT,
+  IF,ELSE,WHILE,FOR,SWITCH,BREAK,CASE,CONTINUE,
   LET,FUNCTION,CLASS,
 
   LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 

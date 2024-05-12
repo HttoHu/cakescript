@@ -50,7 +50,7 @@ private:
 };
 class SymbolTable {
 public:
-  SymbolTable() : symbol_table(1) {}
+  SymbolTable() : symbol_table(1), func_vcnt(1) {}
   void new_block() { symbol_table.push_back({}); }
   void end_block() {
     auto &mp = symbol_table.back();
@@ -58,7 +58,11 @@ public:
       delete val;
     symbol_table.pop_back();
   }
-
+  void new_func() {
+    func_vcnt.push_back(0);
+    new_block();
+  }
+  void end_func() { func_vcnt.pop_back(); }
   // if return nullptr, the symbol not found.
   Symbol *find_symbol(string_view name) {
     for (auto block = symbol_table.rbegin(); block != symbol_table.rend(); block++) {
@@ -68,24 +72,25 @@ public:
     }
     return nullptr;
   }
-  void add_symbol(string_view name, Symbol *sym) { symbol_table.back().insert({name, sym}); }
-  // current block variable count.
-  size_t cblk_vcnt() {
-    size_t ret = 0;
-    auto &mp = symbol_table.back();
-    for (auto &[name, sym] : mp) {
-      if (sym->get_kind() == SymbolKind::SYM_VAR)
-        ret++;
-    }
-    return ret;
+
+  void add_symbol(string_view name, Symbol *sym) {
+    symbol_table.back().insert({name, sym});
+    func_vcnt.back() += sym->get_kind() == SYM_VAR;
   }
+
+  // current block variable count.
+  size_t cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {
     while (!symbol_table.empty())
       end_block();
     symbol_table.resize(1);
+    func_vcnt.resize(1);
+    func_vcnt[0] = 0;
   }
 
 private:
+  // to record current function have how many variables. function may be nested in other functions.
+  std::vector<size_t> func_vcnt;
   deque<map<string_view, Symbol *>> symbol_table;
 };
 

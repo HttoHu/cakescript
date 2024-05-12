@@ -13,7 +13,7 @@ public:
   TokenKind ctok_kind() { return peek(0).kind; }
 
   std::vector<AstNodePtr> parse_stmts();
-
+  std::vector<AstNodePtr> parse_block();
   AstNodePtr parse_stmt();
   AstNodePtr parse_expr() { return parse_expr_imp(16); }
   [[noreturn]] void syntax_error(const std::string &error_info);
@@ -26,5 +26,7 @@ private:
   AstNodePtr parse_expr_imp(int pred);
 
   AstNodePtr parse_decl();
+  AstNodePtr parse_if();
+  AstNodePtr parse_while();
 };
 } // namespace cake

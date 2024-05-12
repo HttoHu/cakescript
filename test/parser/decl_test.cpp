@@ -25,6 +25,16 @@ static std::string parse_blocks(const std::string &str) {
   }
   return ret;
 }
+cake::ObjectBase *get_var_val(std::string name) {
+  auto sym = Context::global_symtab()->find_symbol(name);
+  if (!sym)
+    return nullptr;
+  auto var_sym = dynamic_cast<VarSymbol *>(sym);
+  if (!var_sym)
+    return nullptr;
+  return Memory::gmem.get_local(var_sym->get_stac_pos());
+}
+
 #ifndef DISABLE_UNIT
 TEST(parserTest, DeclTest1) {
   EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(vardecl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
@@ -43,16 +53,7 @@ TEST(parserTest, DeclTest1) {
   }
   EXPECT_TRUE(ok);
 }
-#endif
-cake::ObjectBase *get_var_val(std::string name) {
-  auto sym = Context::global_symtab()->find_symbol(name);
-  if (!sym)
-    return nullptr;
-  auto var_sym = dynamic_cast<VarSymbol *>(sym);
-  if (!var_sym)
-    return nullptr;
-  return Memory::gmem.get_local(var_sym->get_stac_pos());
-}
+
 
 TEST(parserTest, DeclTest2) {
 
@@ -87,3 +88,4 @@ c=b-3*a;
   Memory::gmem.clear();
   Context::global_context()->clear();
 }
+#endif
