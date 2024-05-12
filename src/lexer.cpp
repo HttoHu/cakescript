@@ -20,26 +20,26 @@ TokenKind Token::get_word_kind(string_view word) {
 }
 std::string Token::token_kind_str(TokenKind kind) {
   using enum TokenKind;
+#define __TMP_MATH(KIND) \
+  case KIND: \
+    return #KIND;
   switch (kind) {
-  case PLUS:
-    return "PLUS";
-  case MINUS:
-    return "MINUS";
-  case MUL:
-    return "MUL";
-  case DIV:
-    return "DIV";
-  case ASSIGN:
-    return "ASSIGN";
-  case INTEGER:
-    return "INTEGER";
-  case EQ:
-    return "EQ";
-  case NE:
-    return "NE";
+  __TMP_MATH(PLUS)
+  __TMP_MATH(MINUS)
+  __TMP_MATH(MUL)
+  __TMP_MATH(DIV)
+  __TMP_MATH(ASSIGN)
+  __TMP_MATH(INTEGER)
+  __TMP_MATH(EQ)
+  __TMP_MATH(NE)
+  __TMP_MATH(LT)
+  __TMP_MATH(LE)
+  __TMP_MATH(GE)
+  __TMP_MATH(GT)
   default:
     return "UNKNOWN";
   }
+#undef __TMP_MATH
 }
 std::string Token::get_file_pos() const {
   return fmt::format("{}:{}:{}", Context::global_context()->get_source_file(file_no), line, col);

@@ -22,6 +22,10 @@ public:
   virtual ObjectBase *div(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *le(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *lt(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *gt(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *ge(ObjectBase *rhs, ObjectBase *result) { abort(); }
 
 private:
 };
@@ -74,6 +78,10 @@ public:
   ObjectBase *div(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *le(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *lt(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *gt(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *ge(ObjectBase *rhs, ObjectBase *result) override;
   ObjectBase *clone() const override { return new NumberObject(data); }
 
 private:

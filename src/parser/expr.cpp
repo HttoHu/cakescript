@@ -144,6 +144,10 @@ ObjectBase *BinOp::eval() {
     BIN_OP_MP(DIV,div)
     BIN_OP_MP(EQ,eq)
     BIN_OP_MP(NE,ne)
+    BIN_OP_MP(GE,ge)
+    BIN_OP_MP(GT,gt)
+    BIN_OP_MP(LE,le)
+    BIN_OP_MP(LT,lt)
   default:
     abort();
   }

@@ -166,5 +166,40 @@ ObjectBase *IfTrueJmp::eval() {
   return nullptr;
 }
 
-void WhileStmt::generate_to(vector<AstNodePtr> &block) {}
+void WhileStmt::generate_to(vector<AstNodePtr> &block) {
+  /*
+  while(cond)
+  {
+    stmts...
+  }
+  =>
+cond_pos:
+if cond loop_body_pos, end
+loop_body_pos:
+  stmts
+  goto cond_pos
+end:
+*/
+
+  int cond_pos = block.size() - 1;
+  auto check_stmt = new IfTrueJmp;
+  check_stmt->cond = std::move(condition);
+
+  block.push_back(AstNodePtr(check_stmt));
+  int loop_body_pos = block.size() - 1;
+  check_stmt->dest = loop_body_pos;
+
+  for (auto &node : loop_body) {
+    if (auto cfg = dynamic_cast<CFGNode *>(node.get()))
+      cfg->generate_to(block);
+    else
+      block.emplace_back(std::move(node));
+  }
+  block.push_back(std::make_unique<Goto>(cond_pos));
+  int end_pos = block.size() - 1;
+  check_stmt->false_dest = end_pos;
+
+  // clear 
+  loop_body.clear();
+}
 } // namespace cake

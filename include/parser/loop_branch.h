@@ -19,6 +19,7 @@ class IfStmt : public CFGNode {
 public:
   IfStmt() : conditional_blocks(0), else_block(0) {}
   void generate_to(vector<AstNodePtr> &block) override;
+  std::string to_string() const override { return "(unflatten if node)"; }
   /*
   if (cond) {blk}      |
   else if (cond) {blk} |->conditional_blocks
@@ -33,7 +34,7 @@ public:
 class WhileStmt : public CFGNode {
 public:
   void generate_to(vector<AstNodePtr> &block) override;
-
+  std::string to_string() const override { return "(unflatten while node)"; }
   AstNodePtr condition;
   std::vector<AstNodePtr> loop_body;
 };
@@ -57,6 +58,8 @@ public:
 };
 class Goto : public AstNode {
 public:
+  Goto()=default;
+  Goto(int d):dest(d){}
   std::string to_string() const override { return "(goto " + std::to_string(dest) + ")"; }
   ObjectBase *eval() override;
   int dest;

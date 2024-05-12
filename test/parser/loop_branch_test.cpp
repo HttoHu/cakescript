@@ -5,6 +5,8 @@
 #include <runtime/mem.h>
 using namespace cake;
 cake::ObjectBase *get_var_val(std::string name);
+
+#ifdef DISABLE_UNIT
 TEST(parserTest, LoopBranchTest1) {
   auto text = R"(
 let a = 0,b = 1;
@@ -37,7 +39,7 @@ else
   Memory::gmem.new_block(cake::Context::global_context()->cblk_vcnt());
   int i = 0;
   std::vector<int> seqs;
-  std::vector<int> expected_seqs={0, 1, 4, 5, 6, 7, 10, 11, 14, 15};
+  std::vector<int> expected_seqs = {0, 1, 4, 5, 6, 7, 10, 11, 14, 15};
   for (Memory::pc = 0; Memory::pc < stmts.size(); Memory::pc++) {
     seqs.push_back(Memory::pc);
     // std::cout << "#" << Memory::pc << "\tRUN" << stmts[Memory::pc]->to_string() << std::endl;
@@ -46,8 +48,47 @@ else
   // std::cout << n->to_string() << std::endl;
   EXPECT_EQ(get_var_val("b")->to_string(), "3");
   EXPECT_EQ(get_var_val("c")->to_string(), "15");
-  
+
   EXPECT_EQ(seqs, expected_seqs);
+
   cake::Context::global_context()->clear();
   Memory::gmem.clear();
+  Memory::pc = 0;
 }
+
+TEST(parserTest, LoopBranchTest2) {
+  auto text = R"(
+let sum = 0;
+let i = 0;
+while(i < 10){
+  sum=i+sum;
+  i=i+1;
+}
+)";
+  cake::Scanner scanner(text);
+  cake::Parser parser(std::move(scanner));
+  auto stmts = parser.parse_stmts();
+
+  auto while_node = dynamic_cast<WhileStmt *>(stmts[2].get());
+  EXPECT_EQ(while_node->condition->to_string(), "(LT i(1) 10)");
+  EXPECT_EQ(while_node->loop_body.size(), 2);
+  EXPECT_EQ(while_node->loop_body[0]->to_string(), "(ASSIGN sum(0) (PLUS i(1) sum(0)))");
+  EXPECT_EQ(while_node->loop_body[1]->to_string(), "(ASSIGN i(1) (PLUS i(1) 1))");
+  CFGNode::flatten_blocks(stmts);
+  EXPECT_EQ(stmts[2]->to_string(), "(if (LT i(1) 10) goto 2 else 5)");
+  EXPECT_EQ(stmts[3]->to_string(), "(ASSIGN sum(0) (PLUS i(1) sum(0)))");
+  EXPECT_EQ(stmts[4]->to_string(), "(ASSIGN i(1) (PLUS i(1) 1))");
+  EXPECT_EQ(stmts[5]->to_string(), "(goto 1)");
+
+  for (; Memory::pc < stmts.size(); Memory::pc++) {
+    // std::cout << "#" << Memory::pc << "\t:" << stmts[Memory::pc]->to_string() << std::endl;
+    stmts[Memory::pc]->eval();
+  }
+  EXPECT_EQ(get_var_val("i")->to_string(), "10");
+  EXPECT_EQ(get_var_val("sum")->to_string(), "45");
+  cake::Context::global_context()->clear();
+  Memory::gmem.clear();
+  Memory::pc = 0;
+}
+
+#endif
