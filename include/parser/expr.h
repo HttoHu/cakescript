@@ -68,6 +68,7 @@ public:
 
 private:
   ObjectBase *result_tmp;
+  std::string get_str_from_literal(const std::string &text);
 };
 
 class Variable : public AstNode {

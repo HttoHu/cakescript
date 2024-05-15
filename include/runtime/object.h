@@ -100,6 +100,7 @@ public:
   StringObject(std::string _str) : str(std::move(_str)) {}
   std::string to_string() const override { return str; }
   ObjectBase *add(ObjectBase *rhs) override;
+  ObjectBase *clone() const override { return new StringObject(str); }
 
 private:
   std::string str;

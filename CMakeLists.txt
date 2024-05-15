@@ -18,6 +18,7 @@ FetchContent_MakeAvailable(fmt)
 set (cake_sources 
   "src/context.cpp"
   "src/lexer.cpp"
+  "src/utils.cpp"
   "src/parser/parser.cpp"
   "src/parser/expr.cpp"
   "src/parser/decl.cpp"

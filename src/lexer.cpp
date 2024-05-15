@@ -2,18 +2,15 @@
 #include <fmt/format.h>
 #include <iostream>
 #include <lexer.h>
+#include <map>
 #include <unordered_map>
-
 namespace cake {
 
 TokenKind Token::get_word_kind(string_view word) {
-  const std::unordered_map<string_view, TokenKind> tab = {{"if", TokenKind::IF},
-                                                          {"while", TokenKind::WHILE},
-                                                          {"for", TokenKind::FOR},
-                                                          {"let", TokenKind::LET},
-                                                          {"else", TokenKind::ELSE},
-                                                          {"function", TokenKind::FUNCTION},
-                                                          {"return", TokenKind::RETURN}};
+  const std::unordered_map<string_view, TokenKind> tab = {
+      {"if", TokenKind::IF},        {"while", TokenKind::WHILE}, {"for", TokenKind::FOR},
+      {"let", TokenKind::LET},      {"else", TokenKind::ELSE},   {"function", TokenKind::FUNCTION},
+      {"return", TokenKind::RETURN}};
   auto it = tab.find(word);
   if (it != tab.end())
     return it->second;
@@ -21,22 +18,22 @@ TokenKind Token::get_word_kind(string_view word) {
 }
 std::string Token::token_kind_str(TokenKind kind) {
   using enum TokenKind;
-#define __TMP_MATH(KIND) \
-  case KIND: \
+#define __TMP_MATH(KIND)                                                                                               \
+  case KIND:                                                                                                           \
     return #KIND;
   switch (kind) {
-  __TMP_MATH(PLUS)
-  __TMP_MATH(MINUS)
-  __TMP_MATH(MUL)
-  __TMP_MATH(DIV)
-  __TMP_MATH(ASSIGN)
-  __TMP_MATH(INTEGER)
-  __TMP_MATH(EQ)
-  __TMP_MATH(NE)
-  __TMP_MATH(LT)
-  __TMP_MATH(LE)
-  __TMP_MATH(GE)
-  __TMP_MATH(GT)
+    __TMP_MATH(PLUS)
+    __TMP_MATH(MINUS)
+    __TMP_MATH(MUL)
+    __TMP_MATH(DIV)
+    __TMP_MATH(ASSIGN)
+    __TMP_MATH(INTEGER)
+    __TMP_MATH(EQ)
+    __TMP_MATH(NE)
+    __TMP_MATH(LT)
+    __TMP_MATH(LE)
+    __TMP_MATH(GE)
+    __TMP_MATH(GT)
   default:
     return "UNKNOWN";
   }
@@ -108,6 +105,8 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::COLON, ":");
   case ';':
     return create_token(TokenKind::SEMI, ";");
+  case '\"':
+    return scan_string_literal();
   case '<':
     if (pos < text.size() && text[pos] == '=' && ++pos)
       return create_token(TokenKind::LE, "<=");
@@ -191,5 +190,25 @@ void Scanner::skip_space() {
       error("expect comment terminator \"*/\" !");
     skip_space();
   }
+}
+
+Token Scanner::scan_string_literal() {
+  // jump over "
+  int l = pos - 1, c = col - 1;
+  for (; pos < text.size(); pos++, col++) {
+    if (text[pos] == '\"')
+      break;
+
+    if (text[pos] == '\\') {
+      pos++, col++;
+    } else if (text[pos] == '\n')
+      error("scan string but got a newline!");
+  }
+  // now str[pos] expected "
+  int r = pos;
+  if (text[pos] != '\"')
+    error("string literal terminaltor not found");
+  pos++;
+  return Token(TokenKind::STRING, std::string_view(text).substr(l, r - l + 1), line, c, file_idx);
 }
 } // namespace cake

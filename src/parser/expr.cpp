@@ -99,7 +99,7 @@ AstNodePtr Parser::parse_unit() {
       auto args = parse_expr_list(LPAR, RPAR);
       AstNodePtr ret = std::make_unique<CallNode>(tok, func, std::move(args));
       return ret;
-    } else if(sym->get_kind() == SYM_CALLBLE){
+    } else if (sym->get_kind() == SYM_CALLBLE) {
       auto callable = FunctionSymbol::get_callable(sym);
       auto args = parse_expr_list(LPAR, RPAR);
       AstNodePtr ret = std::make_unique<CallNode>(tok, callable, std::move(args));
@@ -124,6 +124,7 @@ AstNodePtr Parser::parse_unit() {
     match(END);
     return make_unique<ObjectNode>(std::move(object_list));
   }
+  case TokenKind::STRING:
   case TokenKind::INTEGER:
     return make_unique<cake::Literal>(tok);
   case TokenKind::LPAR: {
@@ -140,7 +141,7 @@ ObjectBase *BinOp::eval() {
   auto lval = left->eval(), rval = right->eval();
 #define BIN_OP_MP(TAG, OP)                                                                                             \
   case TokenKind::TAG: {                                                                                               \
-    return lval->OP(rval);                                                                                    \
+    return lval->OP(rval);                                                                                             \
   }
   switch (op) {
     BIN_OP_MP(PLUS, add)
@@ -161,7 +162,14 @@ ObjectBase *BinOp::eval() {
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
     result_tmp = new NumberObject((int64_t)std::stoi(std::string{lit.text}));
-  } else
+  } else if (lit.kind == TokenKind::STRING)
+  {
+    auto str = utils::conv_escape(lit.text.substr(1, lit.text.size() - 2));
+    if(!str)
+      unreachable();
+    result_tmp = new StringObject(*str);
+  }
+  else
     unreachable();
 }
 

@@ -9,7 +9,7 @@ using std::string_view;
 
 // clang-format off
 enum TokenKind : uint8_t { 
-  INTEGER, FLOAT, IDENTIFIER, 
+  INTEGER, FLOAT, STRING,IDENTIFIER, 
   PLUS, MINUS, MUL, DIV, 
   ASSIGN,
   LE,LT,GE,GT,EQ,NE, // compare operations
@@ -64,6 +64,8 @@ private:
 
   Token create_token(TokenKind kind, string_view str);
 
+  Token scan_string_literal();
+  
   int file_idx = 0;
   std::string text;
   // current position of text.
