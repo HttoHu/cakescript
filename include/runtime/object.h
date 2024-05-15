@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
@@ -14,19 +15,18 @@ public:
   virtual std::string to_string() const { return "undefined"; }
   virtual ObjectBase *clone() const { abort(); }
   virtual bool is_true() const { abort(); }
-  // if the result type is matched return result, else return a new object of result
-  virtual ObjectBase *add(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  // ditto
-  virtual ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *div(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *le(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *lt(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *gt(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *ge(ObjectBase *rhs, ObjectBase *result) { abort(); }
-  virtual ObjectBase *apply(std::vector<ObjectBase*> args) { abort(); }
+
+  virtual ObjectBase *add(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *sub(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *mul(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *div(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *eq(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *ne(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *le(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *lt(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *gt(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *ge(ObjectBase *rhs) { abort(); }
+  virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
 
 private:
 };
@@ -34,6 +34,7 @@ class NumberObject : public ObjectBase {
 public:
   using ValType = variant<int64_t, double>;
   NumberObject(ValType val) : data(val) {}
+  NumberObject(bool val) : data((int64_t)val) {}
   NumberObject(int64_t val) : data(val) {}
   NumberObject(double val) : data(val) {}
   NumberObject() : data((int64_t)0) {}
@@ -73,30 +74,41 @@ public:
   }
 
   void reset_val(ValType val) { data = val; }
-  ObjectBase *add(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *sub(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *mul(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *div(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *eq(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *ne(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *le(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *lt(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *gt(ObjectBase *rhs, ObjectBase *result) override;
-  ObjectBase *ge(ObjectBase *rhs, ObjectBase *result) override;
+  ObjectBase *add(ObjectBase *rhs) override;
+  ObjectBase *sub(ObjectBase *rhs) override;
+  ObjectBase *mul(ObjectBase *rhs) override;
+  ObjectBase *div(ObjectBase *rhs) override;
+  ObjectBase *eq(ObjectBase *rhs) override;
+  ObjectBase *ne(ObjectBase *rhs) override;
+  ObjectBase *le(ObjectBase *rhs) override;
+  ObjectBase *lt(ObjectBase *rhs) override;
+  ObjectBase *gt(ObjectBase *rhs) override;
+  ObjectBase *ge(ObjectBase *rhs) override;
   ObjectBase *clone() const override { return new NumberObject(data); }
 
 private:
   ValType data;
 };
+class NullObject : public ObjectBase {
+public:
+  std::string to_string() const override { return "null"; }
+
+private:
+};
 class StringObject : public ObjectBase {
 public:
+  StringObject(std::string _str) : str(std::move(_str)) {}
+  std::string to_string() const override { return str; }
+  ObjectBase *add(ObjectBase *rhs) override;
+
 private:
+  std::string str;
 };
 
 class ArrayObject {
 public:
 private:
-  vector<ObjectBase *> objects;
+  std::shared_ptr<vector<ObjectBase *>> objects;
 };
 
 } // namespace cake

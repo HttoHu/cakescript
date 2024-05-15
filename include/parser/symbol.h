@@ -6,7 +6,7 @@
 namespace cake {
 using std::deque;
 using std::map;
-enum SymbolKind { SYM_VAR, SYM_FUNC, SYM_CLASS };
+enum SymbolKind { SYM_VAR, SYM_FUNC, SYM_CALLBLE, SYM_CLASS };
 class FunctionDef;
 /*
   a symbol which maintain a simple use-def chain.
@@ -52,11 +52,17 @@ private:
 class FunctionSymbol : public Symbol {
 public:
   FunctionSymbol(const std::string &func_name, FunctionDef *def) : Symbol(SYM_FUNC, func_name), func_def(def) {}
-  static FunctionDef *get_func_def(Symbol *sym) {
-    return static_cast<FunctionSymbol *>(sym)->func_def;
-  }
+
+  // the callable object is prepared (mainly internal function)
+  FunctionSymbol(const std::string &func_name, ObjectBase *_callable)
+      : Symbol(SYM_CALLBLE, func_name), callable(_callable) {}
+
+  static FunctionDef *get_func_def(Symbol *sym) { return static_cast<FunctionSymbol *>(sym)->func_def; }
+  static ObjectBase *get_callable(Symbol *sym) { return static_cast<FunctionSymbol *>(sym)->callable; }
+
 private:
-  FunctionDef *func_def;
+  FunctionDef *func_def = nullptr;
+  ObjectBase *callable = nullptr;
 };
 class SymbolTable {
 public:
@@ -87,7 +93,10 @@ public:
     symbol_table.back().insert({name, sym});
     func_vcnt.back() += sym->get_kind() == SYM_VAR;
   }
-
+  void add_global_symbol(string_view name, Symbol *sym) {
+    symbol_table.front().insert({name, sym});
+    func_vcnt.back() += sym->get_kind() == SYM_VAR;
+  }
   // current block variable count.
   size_t cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {

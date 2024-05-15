@@ -1,6 +1,6 @@
 #include <context.h>
 #include <parser/symbol.h>
-
+#include <runtime/intern_function.h>
 namespace cake {
 Context::Context() {
   // all tokens have default file.
@@ -13,6 +13,7 @@ Context *Context::global_context() {
 
   if (!ret) {
     ret = new Context();
+    inter_funcs::reg_func(*ret->sym_tab, "print",inter_funcs::print);
     return ret;
   }
   return ret;

@@ -28,9 +28,9 @@ AstNodePtr Parser::parse_decl() {
     return ret;
   }
   case TokenKind::FUNCTION:
-    unreachable();
+    return parse_function_def();
   default:
-    unreachable();
+    syntax_error("unexpected token ");
   }
 }
 

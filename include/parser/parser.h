@@ -11,7 +11,7 @@ public:
 
   // current token tag.
   TokenKind ctok_kind() { return peek(0).kind; }
-
+  std::vector<AstNodePtr> parse_global();
   std::vector<AstNodePtr> parse_stmts();
   std::vector<AstNodePtr> parse_block();
   AstNodePtr parse_stmt();

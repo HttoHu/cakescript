@@ -12,16 +12,29 @@ Token Parser::match(TokenKind kind) {
     lexer.error(tok, fmt::format("unexpected token {}", tok.text));
   return tok;
 }
+
 std::vector<AstNodePtr> Parser::parse_stmts() {
   std::vector<AstNodePtr> ret;
   while (peek(0).kind != NIL && peek(0).kind != END) {
     ret.emplace_back(parse_stmt());
-    if(peek(0).kind == SEMI)
+    if (peek(0).kind == SEMI)
       match(SEMI);
   }
   return ret;
 }
-
+std::vector<AstNodePtr> Parser::parse_global() {
+  std::vector<AstNodePtr> stmts = parse_stmts();
+  std::vector<AstNodePtr> ret;
+  for (auto &node : stmts) {
+    if (auto cfg = dynamic_cast<CFGNode *>(node.get()))
+      cfg->generate_to(ret);
+    else if (auto func_def = dynamic_cast<FunctionDef *>(node.get())) {
+      func_def->gen_func_object();
+    } else
+      ret.emplace_back(std::move(node));
+  }
+  return ret;
+}
 std::vector<AstNodePtr> Parser::parse_block() {
   Context::global_symtab()->new_block();
   bool have_begin = false;

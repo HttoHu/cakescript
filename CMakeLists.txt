@@ -26,6 +26,7 @@ set (cake_sources
   "src/runtime/object.cpp"
   "src/runtime/mem.cpp"
   "src/runtime/callable_object.cpp"
+  "src/runtime/intern_function.cpp"
 )
 
 include_directories(include

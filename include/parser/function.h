@@ -28,6 +28,8 @@ public:
       : func_name(_func_name), def(_def), args(std::move(_args)) {
     def->add_use(this);
   }
+  CallNode(Token _func_name, ObjectBase *callable, std::vector<AstNodePtr> _args)
+      : func_name(_func_name), executor(callable), args(std::move(_args)) {}
   ObjectBase *eval() override;
   std::string to_string() const override;
 
@@ -45,7 +47,7 @@ class RetNode : public AstNode {
 public:
   RetNode(AstNodePtr _expr) : expr(std::move(_expr)) {}
   ObjectBase *eval() override;
-  std::string to_string() const override{ return "(return " + expr->to_string() + ")"; }
+  std::string to_string() const override { return "(return " + expr->to_string() + ")"; }
 
 private:
   AstNodePtr expr;

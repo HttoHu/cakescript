@@ -99,6 +99,11 @@ AstNodePtr Parser::parse_unit() {
       auto args = parse_expr_list(LPAR, RPAR);
       AstNodePtr ret = std::make_unique<CallNode>(tok, func, std::move(args));
       return ret;
+    } else if(sym->get_kind() == SYM_CALLBLE){
+      auto callable = FunctionSymbol::get_callable(sym);
+      auto args = parse_expr_list(LPAR, RPAR);
+      AstNodePtr ret = std::make_unique<CallNode>(tok, callable, std::move(args));
+      return ret;
     }
     syntax_error("unsupported symbol kind ");
     break;
@@ -135,7 +140,7 @@ ObjectBase *BinOp::eval() {
   auto lval = left->eval(), rval = right->eval();
 #define BIN_OP_MP(TAG, OP)                                                                                             \
   case TokenKind::TAG: {                                                                                               \
-    return lval->OP(rval, nullptr);                                                                                    \
+    return lval->OP(rval);                                                                                    \
   }
   switch (op) {
     BIN_OP_MP(PLUS, add)
