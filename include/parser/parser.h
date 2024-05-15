@@ -18,7 +18,8 @@ public:
   AstNodePtr parse_expr() { return parse_expr_imp(16); }
   [[noreturn]] void syntax_error(const std::string &error_info);
   [[noreturn]] void syntax_error(const std::string &error_info, Token tok);
-
+  AstNodePtr parse_function_def();
+  AstNodePtr parse_function_call();
 private:
   Scanner lexer;
   AstNodePtr parse_unit();
@@ -28,5 +29,7 @@ private:
   AstNodePtr parse_decl();
   AstNodePtr parse_if();
   AstNodePtr parse_while();
+  // comma seperated list
+  std::vector<AstNodePtr> parse_expr_list(TokenKind begin, TokenKind end);
 };
 } // namespace cake

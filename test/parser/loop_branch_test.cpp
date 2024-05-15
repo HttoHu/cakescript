@@ -6,7 +6,7 @@
 using namespace cake;
 cake::ObjectBase *get_var_val(std::string name);
 
-#ifdef DISABLE_UNIT
+#ifndef DISABLE_UNIT
 TEST(parserTest, LoopBranchTest1) {
   auto text = R"(
 let a = 0,b = 1;
@@ -36,7 +36,7 @@ else
   auto stmts = parser.parse_stmts();
 
   CFGNode::flatten_blocks(stmts);
-  Memory::gmem.new_block(cake::Context::global_context()->cblk_vcnt());
+  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   int i = 0;
   std::vector<int> seqs;
   std::vector<int> expected_seqs = {0, 1, 4, 5, 6, 7, 10, 11, 14, 15};
@@ -68,7 +68,7 @@ while(i < 10){
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
   auto stmts = parser.parse_stmts();
-
+  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   auto while_node = dynamic_cast<WhileStmt *>(stmts[2].get());
   EXPECT_EQ(while_node->condition->to_string(), "(LT i(1) 10)");
   EXPECT_EQ(while_node->loop_body.size(), 2);
@@ -90,5 +90,27 @@ while(i < 10){
   Memory::gmem.clear();
   Memory::pc = 0;
 }
+TEST(parserTest, LoopBranchTest3) {
+  auto text = R"(
+let a = 1,b=100;
+let sum = 0;
+while (a < b) {
+  sum = sum + a;
+  a = a + 1;
+}
+)";
+  cake::Scanner scanner(text);
+  cake::Parser parser(std::move(scanner));
+  auto stmts = parser.parse_stmts();
+  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
+  CFGNode::flatten_blocks(stmts);
 
+  for (; Memory::pc < stmts.size(); Memory::pc++) {
+    stmts[Memory::pc]->eval();
+  }
+  EXPECT_EQ(get_var_val("sum")->to_string(), "4950");
+  cake::Context::global_context()->clear();
+  Memory::gmem.clear();
+  Memory::pc = 0;
+}
 #endif

@@ -12,7 +12,8 @@ TokenKind Token::get_word_kind(string_view word) {
                                                           {"for", TokenKind::FOR},
                                                           {"let", TokenKind::LET},
                                                           {"else", TokenKind::ELSE},
-                                                          {"function", TokenKind::FUNCTION}};
+                                                          {"function", TokenKind::FUNCTION},
+                                                          {"return", TokenKind::RETURN}};
   auto it = tab.find(word);
   if (it != tab.end())
     return it->second;

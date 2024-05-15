@@ -26,6 +26,7 @@ public:
   virtual ObjectBase *lt(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *gt(ObjectBase *rhs, ObjectBase *result) { abort(); }
   virtual ObjectBase *ge(ObjectBase *rhs, ObjectBase *result) { abort(); }
+  virtual ObjectBase *apply(std::vector<ObjectBase*> args) { abort(); }
 
 private:
 };

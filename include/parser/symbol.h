@@ -7,7 +7,7 @@ namespace cake {
 using std::deque;
 using std::map;
 enum SymbolKind { SYM_VAR, SYM_FUNC, SYM_CLASS };
-
+class FunctionDef;
 /*
   a symbol which maintain a simple use-def chain.
   using this simple use-def chain, we can rewrite every use or we can put defination of a
@@ -47,6 +47,16 @@ public:
 
 private:
   size_t stac_pos;
+};
+
+class FunctionSymbol : public Symbol {
+public:
+  FunctionSymbol(const std::string &func_name, FunctionDef *def) : Symbol(SYM_FUNC, func_name), func_def(def) {}
+  static FunctionDef *get_func_def(Symbol *sym) {
+    return static_cast<FunctionSymbol *>(sym)->func_def;
+  }
+private:
+  FunctionDef *func_def;
 };
 class SymbolTable {
 public:

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <lexer.h>
-#include <object.h>
+#include <runtime/object.h>
 #include <variant>
 
 using namespace std;

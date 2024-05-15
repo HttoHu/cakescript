@@ -1,6 +1,7 @@
 #include <context.h>
 #include <map>
 #include <parser/expr.h>
+#include <parser/function.h>
 #include <parser/parser.h>
 #include <parser/symbol.h>
 #include <runtime/mem.h>
@@ -93,8 +94,13 @@ AstNodePtr Parser::parse_unit() {
       syntax_error("undefined symbol " + std::string{tok.text}, tok);
     if (sym->get_kind() == SYM_VAR) {
       return make_unique<Variable>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
-    } else
-      syntax_error("unsupported symbol kind ");
+    } else if (sym->get_kind() == SYM_FUNC) {
+      auto func = FunctionSymbol::get_func_def(sym);
+      auto args = parse_expr_list(LPAR, RPAR);
+      AstNodePtr ret = std::make_unique<CallNode>(tok, func, std::move(args));
+      return ret;
+    }
+    syntax_error("unsupported symbol kind ");
     break;
   }
   // parse object
@@ -128,30 +134,23 @@ AstNodePtr Parser::parse_unit() {
 ObjectBase *BinOp::eval() {
   auto lval = left->eval(), rval = right->eval();
 #define BIN_OP_MP(TAG, OP)                                                                                             \
-  case TokenKind::TAG: {                                                                                             \
-    auto res = lval->OP(rval, result_tmp);                                                                           \
-    if (result_tmp != res) {                                                                                           \
-      delete result_tmp;                                                                                               \
-      result_tmp = res;                                                                                                \
-    }                                                                                                                  \
-    break;                                                                                                             \
+  case TokenKind::TAG: {                                                                                               \
+    return lval->OP(rval, nullptr);                                                                                    \
   }
-
   switch (op) {
     BIN_OP_MP(PLUS, add)
-    BIN_OP_MP(MUL,mul)
-    BIN_OP_MP(MINUS,sub)
-    BIN_OP_MP(DIV,div)
-    BIN_OP_MP(EQ,eq)
-    BIN_OP_MP(NE,ne)
-    BIN_OP_MP(GE,ge)
-    BIN_OP_MP(GT,gt)
-    BIN_OP_MP(LE,le)
-    BIN_OP_MP(LT,lt)
+    BIN_OP_MP(MUL, mul)
+    BIN_OP_MP(MINUS, sub)
+    BIN_OP_MP(DIV, div)
+    BIN_OP_MP(EQ, eq)
+    BIN_OP_MP(NE, ne)
+    BIN_OP_MP(GE, ge)
+    BIN_OP_MP(GT, gt)
+    BIN_OP_MP(LE, le)
+    BIN_OP_MP(LT, lt)
   default:
     abort();
   }
-  return result_tmp;
 }
 
 Literal::Literal(Token lit) {

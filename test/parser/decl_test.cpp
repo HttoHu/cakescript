@@ -69,7 +69,7 @@ c=b-3*a;
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
   auto nodes = parser.parse_stmts();
-  Memory::gmem.new_block(cake::Context::global_context()->cblk_vcnt());
+  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   EXPECT_EQ(nodes[0]->eval(), nullptr);
   EXPECT_EQ(get_var_val("a")->to_string(), "34");
   EXPECT_EQ(get_var_val("b")->to_string(), "1");

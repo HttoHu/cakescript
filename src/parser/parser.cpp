@@ -1,8 +1,10 @@
 #include <context.h>
 #include <fmt/format.h>
+#include <parser/function.h>
 #include <parser/loop_branch.h>
 #include <parser/parser.h>
 #include <parser/symbol.h>
+
 namespace cake {
 Token Parser::match(TokenKind kind) {
   auto tok = lexer.next_token();
@@ -14,6 +16,8 @@ std::vector<AstNodePtr> Parser::parse_stmts() {
   std::vector<AstNodePtr> ret;
   while (peek(0).kind != NIL && peek(0).kind != END) {
     ret.emplace_back(parse_stmt());
+    if(peek(0).kind == SEMI)
+      match(SEMI);
   }
   return ret;
 }
@@ -51,6 +55,12 @@ AstNodePtr Parser::parse_stmt() {
     return parse_if();
   case WHILE:
     return parse_while();
+  case RETURN: {
+    match(RETURN);
+    if (peek(0).kind != NIL && peek(0).kind != END && peek(0).kind != SEMI)
+      return make_unique<RetNode>(parse_expr());
+    return std::make_unique<RetNode>(std::make_unique<EmptyNode>());
+  }
   default:
     unreachable();
   }

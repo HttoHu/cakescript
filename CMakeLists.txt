@@ -22,8 +22,10 @@ set (cake_sources
   "src/parser/expr.cpp"
   "src/parser/decl.cpp"
   "src/parser/loop_branch.cpp"
-  "src/object.cpp"
+  "src/parser/function.cpp"
+  "src/runtime/object.cpp"
   "src/runtime/mem.cpp"
+  "src/runtime/callable_object.cpp"
 )
 
 include_directories(include

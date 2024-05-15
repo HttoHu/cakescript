@@ -17,7 +17,7 @@ enum TokenKind : uint8_t {
   NOT,
   IF,ELSE,WHILE,FOR,SWITCH,BREAK,CASE,CONTINUE,
   LET,FUNCTION,CLASS,
-
+  RETURN,
   LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 
   BEGIN,END, // {}
   SEMI,COLON,COMMA, // ; : ,

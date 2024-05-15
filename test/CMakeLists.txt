@@ -9,10 +9,12 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 # add_compile_definitions(DISABLE_UNIT)
 add_executable(unit
+  ./utils.cpp
   ./lexer_test.cpp
   ./parser/expr_test.cpp
   ./parser/decl_test.cpp
   ./parser/loop_branch_test.cpp
+  ./runtime/func_test.cpp
 )
 target_link_libraries(unit 
   GTest::gtest_main
