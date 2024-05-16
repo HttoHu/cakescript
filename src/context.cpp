@@ -14,6 +14,7 @@ Context *Context::global_context() {
   if (!ret) {
     ret = new Context();
     inter_funcs::reg_func(*ret->sym_tab, "print",inter_funcs::print);
+    inter_funcs::reg_func(*ret->sym_tab, "length",inter_funcs::length);
     return ret;
   }
   return ret;

@@ -100,9 +100,8 @@ public:
   // current block variable count.
   size_t cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {
-    while (!symbol_table.empty())
+    while (symbol_table.size() > 1)
       end_block();
-    symbol_table.resize(1);
     func_vcnt.resize(1);
     func_vcnt[0] = 0;
   }

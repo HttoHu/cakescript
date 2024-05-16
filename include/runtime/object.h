@@ -1,9 +1,9 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <utils.h>
 #include <variant>
 #include <vector>
-
 namespace cake {
 using std::string;
 using std::variant;
@@ -27,6 +27,8 @@ public:
   virtual ObjectBase *gt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *ge(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
+  virtual ObjectBase *&visit(int idx) { unreachable(); }
+  virtual ObjectBase *&visit(std::string_view idx) { unreachable(); }
 
 private:
 };
@@ -38,7 +40,11 @@ public:
   NumberObject(int64_t val) : data(val) {}
   NumberObject(double val) : data(val) {}
   NumberObject() : data((int64_t)0) {}
-
+  static int64_t get_integer_strict(ObjectBase *obj) {
+    if (auto integer = dynamic_cast<NumberObject *>(obj))
+      return std::get<int64_t>(integer->data);
+    cake_runtime_error("get integer from an object " + obj->to_string() + "failed!");
+  }
   bool is_true() const override {
     if (!data.index())
       return std::get<int64_t>(data);
@@ -102,14 +108,44 @@ public:
   ObjectBase *add(ObjectBase *rhs) override;
   ObjectBase *clone() const override { return new StringObject(str); }
 
+  std::string to_raw_format() const;
+
 private:
   std::string str;
 };
 
-class ArrayObject {
+class ArrayObject : public ObjectBase {
 public:
+  ArrayObject(vector<ObjectBase *> vals) {
+    objects = new ArrayData;
+    objects->useCnt = 1;
+    objects->arr = std::move(vals);
+  }
+
+  ObjectBase *clone() const override { return new ArrayObject(objects); }
+  ObjectBase *&visit(int idx) override {
+    if (idx >= objects->arr.size())
+      cake_runtime_error("array object range overflow!");
+    return objects->arr[idx];
+  }
+  std::string to_string() const override;
+  ~ArrayObject() {
+    objects->useCnt--;
+    if (!objects->useCnt) {
+      for (auto item : objects->arr)
+        delete item;
+      delete objects;
+    }
+  }
+  size_t get_array_length() const { return objects->arr.size(); }
+
 private:
-  std::shared_ptr<vector<ObjectBase *>> objects;
+  struct ArrayData {
+    vector<ObjectBase *> arr;
+    int useCnt = 0;
+  };
+  ArrayObject(ArrayData *val) : objects(val) { objects->useCnt++; }
+  ArrayData *objects;
 };
 
 } // namespace cake

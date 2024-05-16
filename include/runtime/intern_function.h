@@ -28,5 +28,6 @@ namespace inter_funcs {
 
 void reg_func(SymbolTable &sym_tab, std::string_view func_name, InternalFunction::FuncTy func);
 ObjectBase *print(std::vector<ObjectBase *> args);
+ObjectBase *length(std::vector<ObjectBase *> args);
 } // namespace inter_funcs
 } // namespace cake

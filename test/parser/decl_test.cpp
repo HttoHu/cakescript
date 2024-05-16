@@ -9,20 +9,20 @@ using namespace cake;
 static std::string parse_text(const std::string &str) {
   cake::Scanner scanner(str);
   cake::Parser parser(std::move(scanner));
-  auto node = parser.parse_stmt();
+  auto ret = parser.parse_stmt()->to_string();
   cake::Context::global_context()->clear();
-  return node->to_string();
+  return ret;
 }
 
 static std::string parse_blocks(const std::string &str) {
   cake::Scanner scanner(str);
   cake::Parser parser(std::move(scanner));
   auto nodes = parser.parse_stmts();
-  cake::Context::global_context()->clear();
   std::string ret;
   for (auto &node : nodes) {
     ret += node->to_string() + "\n";
   }
+  cake::Context::global_context()->clear();
   return ret;
 }
 cake::ObjectBase *get_var_val(std::string name) {
@@ -53,7 +53,6 @@ TEST(parserTest, DeclTest1) {
   }
   EXPECT_TRUE(ok);
 }
-
 
 TEST(parserTest, DeclTest2) {
 

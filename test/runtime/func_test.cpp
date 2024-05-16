@@ -2,9 +2,14 @@
 #include <gtest/gtest.h>
 #include <parser/function.h>
 #include <parser/parser.h>
+#include <runtime/mem.h>
+#include <context.h>
+#include <parser/symbol.h>
 #ifndef DISABLE_UNIT
 TEST(runtimeTest, FunctionTest1) {
-  auto text = utils::read_file("./data/function/case1.js");
+  using namespace cake;
+  cake::Context::global_symtab()->new_block();
+  auto text = ::utils::read_file("./data/function/case1.js");
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
   auto func = parser.parse_function_def();
@@ -18,7 +23,9 @@ TEST(runtimeTest, FunctionTest1) {
 
   static_cast<cake::FunctionDef *>(fib_func.get())->gen_func_object();
   EXPECT_EQ(call2->to_string(), "(PLUS (call fib,8) (call test,1,10))");
-  EXPECT_EQ(call2->eval()->to_string(),"66");
+  EXPECT_EQ(call2->eval()->to_string(), "66");
+  cake::Context::global_context()->clear();
+  Memory::gmem.clear();
+  Memory::pc = 0;
 }
 #endif
-

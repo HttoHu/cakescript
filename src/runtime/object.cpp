@@ -42,4 +42,38 @@ ObjectBase *StringObject::add(ObjectBase *rhs) {
   } else
     throw std::runtime_error("StringObject::add, expected a string object of the right operand!");
 }
+std::string StringObject::to_raw_format() const {
+  std::string ret = "\"";
+  for (auto ch : str) {
+    switch (ch) {
+    case '\n':
+      ret += "\\n";
+      break;
+    case '\t':
+      ret += "\\t";
+      break;
+    case '\"':
+      ret += "\\\"";
+      break;
+    default:
+      ret += ch;
+    }
+  }
+  return ret + "\"";
+}
+
+std::string ArrayObject::to_string() const {
+  std::string ret = "[ ";
+  bool first = true;
+  for (auto &mem : objects->arr) {
+    if (!first)
+      ret += ", ";
+    first = false;
+    if (auto str = dynamic_cast<StringObject *>(mem))
+      ret += str->to_raw_format();
+    else
+      ret += mem->to_string();
+  }
+  return ret + " ]";
+}
 } // namespace cake

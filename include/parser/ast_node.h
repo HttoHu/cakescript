@@ -10,6 +10,7 @@ public:
   virtual ObjectBase *eval() { unreachable(); };
   // return a value that user should manage.
   virtual ObjectBase *eval_with_create() { return eval(); }
+  virtual void eval_no_value() { eval(); }
   virtual std::string to_string() const { return "unkonwn ast node"; }
   virtual bool need_delete_eval_object() const { return false; }
   virtual bool left_value() const { return false; }

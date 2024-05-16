@@ -54,6 +54,20 @@ private:
   ObjectBase *result_tmp;
 };
 
+// visit by []
+class ArrayVisit : public AstNode {
+public:
+  ArrayVisit(AstNodePtr _left, AstNodePtr _index) : left(std::move(_left)), index(std::move(_index)) {}
+  std::string to_string() const override;
+  ObjectBase *eval() override;
+  ObjectBase *eval_with_create() override { return eval()->clone(); }
+  bool left_value() const override { return true; }
+  ObjectBase **get_left_val()override;
+private:
+  AstNodePtr left;
+  AstNodePtr index;
+};
+
 // Number literal or string literal
 class Literal : public AstNode {
 public:
@@ -114,6 +128,7 @@ public:
       ret.back() = ']';
     return ret + ")";
   }
+  ObjectBase *eval() override;
 
 private:
   std::vector<AstNodePtr> nodes;

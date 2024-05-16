@@ -75,65 +75,88 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
   }
 }
 AstNodePtr Parser::parse_unit() {
-  auto tok = lexer.next_token();
-  switch (tok.kind) {
-  // parse array
-  case TokenKind::LSB: {
-    std::vector<AstNodePtr> nodes;
-    while (!lexer.reach_to_end() && lexer.peek(0).kind != RSB) {
-      nodes.push_back(parse_expr());
-      if (peek(0).kind != RSB)
-        match(COMMA);
+  AstNodePtr left = nullptr;
+  bool have_left = false;
+  while (true) {
+    auto tok = peek(0);
+    switch (tok.kind) {
+    case TokenKind::LSB: {
+      match(LSB);
+      // arrayVisitor
+      if (have_left) {
+        auto index = parse_expr();
+        match(RSB);
+        left = std::make_unique<ArrayVisit>(std::move(left), std::move(index));
+        break;
+      }
+      // array literal
+      std::vector<AstNodePtr> nodes;
+      while (!lexer.reach_to_end() && lexer.peek(0).kind != RSB) {
+        nodes.push_back(parse_expr());
+        if (peek(0).kind != RSB)
+          match(COMMA);
+      }
+      match(RSB);
+      return make_unique<ArrayNode>(std::move(nodes));
     }
-    match(RSB);
-    return make_unique<ArrayNode>(std::move(nodes));
-  }
-  case TokenKind::IDENTIFIER: {
-    auto sym = Context::global_symtab()->find_symbol(tok.text);
-    if (!sym)
-      syntax_error("undefined symbol " + std::string{tok.text}, tok);
-    if (sym->get_kind() == SYM_VAR) {
-      return make_unique<Variable>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
-    } else if (sym->get_kind() == SYM_FUNC) {
-      auto func = FunctionSymbol::get_func_def(sym);
-      auto args = parse_expr_list(LPAR, RPAR);
-      AstNodePtr ret = std::make_unique<CallNode>(tok, func, std::move(args));
-      return ret;
-    } else if (sym->get_kind() == SYM_CALLBLE) {
-      auto callable = FunctionSymbol::get_callable(sym);
-      auto args = parse_expr_list(LPAR, RPAR);
-      AstNodePtr ret = std::make_unique<CallNode>(tok, callable, std::move(args));
-      return ret;
-    }
-    syntax_error("unsupported symbol kind ");
-    break;
-  }
-  // parse object
-  case TokenKind::BEGIN: {
-    std::map<std::string, AstNodePtr> object_list;
-    while (!lexer.reach_to_end() && lexer.peek(0).kind != END) {
-      auto key = lexer.peek(0);
-      // have not supported string key yet.
+    case TokenKind::IDENTIFIER: {
       match(IDENTIFIER);
-      match(COLON);
-      auto val = parse_expr();
-      object_list.insert({std::string{key.text}, std::move(val)});
-      if (peek(0).kind != END)
-        match(COMMA);
+      if (left || have_left)
+        cake_runtime_error("invalid expression!");
+      have_left = true;
+
+      auto sym = Context::global_symtab()->find_symbol(tok.text);
+      if (!sym)
+        syntax_error("undefined symbol " + std::string{tok.text}, tok);
+      if (sym->get_kind() == SYM_VAR) {
+        left = make_unique<Variable>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
+        break;
+      } else if (sym->get_kind() == SYM_FUNC) {
+        auto func = FunctionSymbol::get_func_def(sym);
+        auto args = parse_expr_list(LPAR, RPAR);
+        left = std::make_unique<CallNode>(tok, func, std::move(args));
+        break;
+      } else if (sym->get_kind() == SYM_CALLBLE) {
+        auto callable = FunctionSymbol::get_callable(sym);
+        auto args = parse_expr_list(LPAR, RPAR);
+        left = std::make_unique<CallNode>(tok, callable, std::move(args));
+        break;
+      }
+      syntax_error("unsupported symbol kind ");
+      break;
     }
-    match(END);
-    return make_unique<ObjectNode>(std::move(object_list));
-  }
-  case TokenKind::STRING:
-  case TokenKind::INTEGER:
-    return make_unique<cake::Literal>(tok);
-  case TokenKind::LPAR: {
-    auto ret = parse_expr();
-    match(TokenKind::RPAR);
-    return ret;
-  }
-  default:
-    unreachable();
+    // parse object
+    case TokenKind::BEGIN: {
+      match(BEGIN);
+      std::map<std::string, AstNodePtr> object_list;
+      while (!lexer.reach_to_end() && lexer.peek(0).kind != END) {
+        auto key = lexer.peek(0);
+        // have not supported string key yet.
+        match(IDENTIFIER);
+        match(COLON);
+        auto val = parse_expr();
+        object_list.insert({std::string{key.text}, std::move(val)});
+        if (peek(0).kind != END)
+          match(COMMA);
+      }
+      match(END);
+      return make_unique<ObjectNode>(std::move(object_list));
+    }
+    case TokenKind::STRING:
+    case TokenKind::INTEGER:
+      lexer.next_token();
+      if (have_left)
+        cake_runtime_error("invalid literal!");
+      return make_unique<cake::Literal>(tok);
+    case TokenKind::LPAR: {
+      match(LPAR);
+      auto ret = parse_expr();
+      match(TokenKind::RPAR);
+      return ret;
+    }
+    default:
+      return left;
+    }
   }
 }
 
@@ -162,23 +185,20 @@ ObjectBase *BinOp::eval() {
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
     result_tmp = new NumberObject((int64_t)std::stoi(std::string{lit.text}));
-  } else if (lit.kind == TokenKind::STRING)
-  {
+  } else if (lit.kind == TokenKind::STRING) {
     auto str = utils::conv_escape(lit.text.substr(1, lit.text.size() - 2));
-    if(!str)
+    if (!str)
       unreachable();
     result_tmp = new StringObject(*str);
-  }
-  else
+  } else
     unreachable();
 }
 
 ObjectBase *AssignOp::eval() {
-  auto ret = right->eval();
+  auto ret = right->eval_with_create();
   switch (op) {
-
   case ASSIGN:
-    *left->get_left_val() = ret->clone();
+    *left->get_left_val() = right->eval_with_create();
     break;
   default:
     unreachable();
@@ -196,4 +216,29 @@ std::string AssignOp::to_string() const {
 ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
 
 ObjectBase **Variable::get_left_val() { return &Memory::gmem.get_local(stac_pos); }
+
+ObjectBase *ArrayNode::eval() {
+  ArrayObject *ret;
+  std::vector<ObjectBase *> arr;
+  for (auto &node : nodes)
+    arr.push_back(node->eval_with_create());
+  return new ArrayObject(std::move(arr));
+}
+
+std::string ArrayVisit::to_string() const {
+  return "(array_visit " + left->to_string() + " " + index->to_string() + ")";
+}
+
+ObjectBase *ArrayVisit::eval() {
+  auto index_obj = index->eval_with_create();
+  auto left_val = left->eval_with_create();
+  auto ret = left_val->visit(NumberObject::get_integer_strict(index_obj));
+  return ret;
+}
+
+ObjectBase **ArrayVisit::get_left_val() {
+  auto index_obj = index->eval_with_create();
+  auto left_val = left->eval_with_create();
+  return &left_val->visit(NumberObject::get_integer_strict(index_obj));
+}
 } // namespace cake

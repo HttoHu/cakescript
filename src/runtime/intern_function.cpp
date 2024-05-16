@@ -13,4 +13,12 @@ ObjectBase *print(std::vector<ObjectBase *> args) {
   std::cout << std::endl;
   return new NullObject();
 }
+ObjectBase *length(std::vector<ObjectBase *> args) {
+  if (args.size() != 1)
+    cake_runtime_error("call length error!, expected one arg but got " + std::to_string(args.size()));
+  if (auto arr = dynamic_cast<ArrayObject *>(args[0])) {
+    return new NumberObject((int64_t)arr->get_array_length());
+  }
+  cake_runtime_error("length() expect an array object " + std::to_string(args.size()));
+}
 } // namespace cake::inter_funcs
