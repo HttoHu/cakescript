@@ -14,4 +14,4 @@ function fib(x) {
     return 1;
   return fib(x - 1) + fib(x - 2);
 }
-fib(8)+test(1,10)
+fib(8) + test(1, 10)

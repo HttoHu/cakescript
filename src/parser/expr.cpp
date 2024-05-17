@@ -77,16 +77,37 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
 AstNodePtr Parser::parse_unit() {
   AstNodePtr left = nullptr;
   bool have_left = false;
+  int line_no = lexer.get_cur_line();
   while (true) {
     auto tok = peek(0);
+    // unit can not cross line
+    if (tok.line != line_no)
+      break;
+
     switch (tok.kind) {
+    case TokenKind::DOT: {
+      match(DOT);
+      if (!have_left)
+        syntax_error("member visit must have a left value!");
+      auto id = lexer.peek(0);
+      match(IDENTIFIER);
+      left = std::make_unique<VistorMember<std::string>>(std::move(left), std::string{id.text});
+      break;
+    }
     case TokenKind::LSB: {
       match(LSB);
       // arrayVisitor
       if (have_left) {
-        auto index = parse_expr();
+        if (peek(0).kind == INTEGER) {
+          auto index_tok = lexer.next_token();
+          left = std::make_unique<VistorMember<int64_t>>(std::move(left), index_tok.get_int());
+        } else if (peek(0).kind == STRING) {
+          auto index_tok = lexer.next_token();
+          left = std::make_unique<VistorMember<std::string>>(std::move(left), std::string{index_tok.text});
+        } else {
+          left = std::make_unique<VistorMember<AstNodePtr>>(std::move(left), parse_expr());
+        }
         match(RSB);
-        left = std::make_unique<ArrayVisit>(std::move(left), std::move(index));
         break;
       }
       // array literal
@@ -101,8 +122,9 @@ AstNodePtr Parser::parse_unit() {
     }
     case TokenKind::IDENTIFIER: {
       match(IDENTIFIER);
+      // left identifier can only defined once
       if (left || have_left)
-        cake_runtime_error("invalid expression!");
+        syntax_error("invalid expression current token: " + std::string{peek(0).text});
       have_left = true;
 
       auto sym = Context::global_symtab()->find_symbol(tok.text);
@@ -130,12 +152,20 @@ AstNodePtr Parser::parse_unit() {
       match(BEGIN);
       std::map<std::string, AstNodePtr> object_list;
       while (!lexer.reach_to_end() && lexer.peek(0).kind != END) {
-        auto key = lexer.peek(0);
+        auto key = lexer.next_token();
         // have not supported string key yet.
-        match(IDENTIFIER);
+        std::string key_val;
+        if (key.kind == IDENTIFIER)
+          key_val = key.text;
+        else if (key.kind == STRING)
+          key_val = key.string_raw_text();
+        else
+          cake_runtime_error("list init expected string or identifer as key!");
+
         match(COLON);
         auto val = parse_expr();
-        object_list.insert({std::string{key.text}, std::move(val)});
+
+        object_list.insert({key_val, std::move(val)});
         if (peek(0).kind != END)
           match(COMMA);
       }
@@ -158,9 +188,11 @@ AstNodePtr Parser::parse_unit() {
       return left;
     }
   }
+  if (!left)
+    syntax_error("parse unit failed!");
+  return left;
 }
-
-ObjectBase *BinOp::eval() {
+ObjectBase *BinOp::eval_with_create() {
   auto lval = left->eval(), rval = right->eval();
 #define BIN_OP_MP(TAG, OP)                                                                                             \
   case TokenKind::TAG: {                                                                                               \
@@ -181,7 +213,7 @@ ObjectBase *BinOp::eval() {
     abort();
   }
 }
-
+ObjectBase *BinOp::eval() { return eval_with_create(); }
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
     result_tmp = new NumberObject((int64_t)std::stoi(std::string{lit.text}));
@@ -217,28 +249,17 @@ ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
 
 ObjectBase **Variable::get_left_val() { return &Memory::gmem.get_local(stac_pos); }
 
+ObjectBase *ObjectNode::eval() {
+  std::vector<std::pair<std::string, ObjectBase *>> tab;
+  for (auto &[k, v] : object)
+    tab.push_back({k, v->eval_with_create()});
+  return new StructObject(std::move(tab));
+}
+
 ObjectBase *ArrayNode::eval() {
-  ArrayObject *ret;
   std::vector<ObjectBase *> arr;
   for (auto &node : nodes)
     arr.push_back(node->eval_with_create());
   return new ArrayObject(std::move(arr));
-}
-
-std::string ArrayVisit::to_string() const {
-  return "(array_visit " + left->to_string() + " " + index->to_string() + ")";
-}
-
-ObjectBase *ArrayVisit::eval() {
-  auto index_obj = index->eval_with_create();
-  auto left_val = left->eval_with_create();
-  auto ret = left_val->visit(NumberObject::get_integer_strict(index_obj));
-  return ret;
-}
-
-ObjectBase **ArrayVisit::get_left_val() {
-  auto index_obj = index->eval_with_create();
-  auto left_val = left->eval_with_create();
-  return &left_val->visit(NumberObject::get_integer_strict(index_obj));
 }
 } // namespace cake

@@ -13,6 +13,7 @@ public:
       : left(std::move(_left)), right(std::move(_right)), op(_op) {}
   bool left_value() const override { return op == TokenKind::ASSIGN; }
   ObjectBase *eval() override;
+  ObjectBase *eval_with_create() override;
   std::string to_string() const override {
     return fmt::format("({} {} {})", Token::token_kind_str(op), left->to_string(), right->to_string());
   }
@@ -28,13 +29,9 @@ public:
   AssignOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
       : left(std::move(_left)), op(_op), right(std::move(_right)) {}
   bool left_value() const override { return true; }
-  bool need_delete_eval_object() const override { return right->need_delete_eval_object(); }
   ObjectBase *eval() override;
   ObjectBase *eval_with_create() override {
-    auto ret = eval();
-    if (need_delete_eval_object())
-      return ret;
-    return ret->clone();
+    return eval()->clone();
   }
   std::string to_string() const override;
 
@@ -54,20 +51,58 @@ private:
   ObjectBase *result_tmp;
 };
 
-// visit by []
-class ArrayVisit : public AstNode {
+template <typename INDEX_TY> class VistorMember : public AstNode {
 public:
-  ArrayVisit(AstNodePtr _left, AstNodePtr _index) : left(std::move(_left)), index(std::move(_index)) {}
-  std::string to_string() const override;
-  ObjectBase *eval() override;
-  ObjectBase *eval_with_create() override { return eval()->clone(); }
+  VistorMember(AstNodePtr _left, INDEX_TY _index) : left(std::move(_left)), index(std::move(_index)) {}
+  std::string to_string() const override {
+    if constexpr (std::is_same_v<INDEX_TY, int64_t>)
+      return "(array_visit " + left->to_string() + " " + std::to_string(index) + ")";
+    else if constexpr (std::is_same_v<INDEX_TY, std::string>)
+      return "(array_visit " + left->to_string() + " " + index + ")";
+    else
+      return "(array_visit " + left->to_string() + " " + index->to_string() + ")";
+  }
+  ObjectBase *eval() override {
+    auto left_val = left->eval_with_create();
+
+    if constexpr (std::is_same_v<INDEX_TY, int64_t>)
+      return left_val->visitVal(index);
+    else if constexpr (std::is_same_v<INDEX_TY, std::string>)
+      return left_val->visitVal(index);
+    else {
+      auto index_obj = index->eval_with_create();
+      if (auto *int_index = dynamic_cast<NumberObject *>(index_obj))
+        return left_val->visitVal(int_index->to_int());
+      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
+        return left_val->visitVal(str_index->str);
+      return new UndefinedObject;
+    }
+  }
+  ObjectBase *eval_with_create() override { return eval(); }
+  void eval_no_value() override { delete eval(); }
+
   bool left_value() const override { return true; }
-  ObjectBase **get_left_val()override;
+  ObjectBase **get_left_val() override {
+    auto left_val = left->eval_with_create();
+
+    if constexpr (std::is_same_v<INDEX_TY, int64_t>)
+      return left_val->visit(index);
+    else if constexpr (std::is_same_v<INDEX_TY, std::string>)
+      return left_val->visit(index);
+    else {
+      auto index_obj = index->eval_with_create();
+      if (auto *int_index = dynamic_cast<NumberObject *>(index_obj))
+        return left_val->visit(int_index->to_int());
+      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
+        return left_val->visit(str_index->str);
+      return nullptr;
+    }
+  }
+
 private:
   AstNodePtr left;
-  AstNodePtr index;
+  INDEX_TY index;
 };
-
 // Number literal or string literal
 class Literal : public AstNode {
 public:
@@ -76,12 +111,12 @@ public:
   ObjectBase *eval_with_create() override { return result_tmp->clone(); }
   std::string to_string() const override { return result_tmp->to_string(); }
   ~Literal() {
-    if (result_tmp)
-      delete result_tmp;
+    // if (result_tmp)
+    //   delete result_tmp;
   }
 
 private:
-  ObjectBase *result_tmp;
+  ObjectBase *result_tmp = nullptr;
   std::string get_str_from_literal(const std::string &text);
 };
 
@@ -111,6 +146,7 @@ public:
       ret.back() = '}';
     return ret + ")";
   }
+  ObjectBase *eval() override;
 
 private:
   map<std::string, AstNodePtr> object;

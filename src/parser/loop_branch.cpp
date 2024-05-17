@@ -69,11 +69,10 @@ std::string IfWithJmpTable::to_string() const {
 }
 ObjectBase *IfWithJmpTable::eval() {
   for (auto &[node, dest] : jmp_tab) {
-    auto val = node->eval();
+    auto val = node->eval_with_create();
     bool res = val->is_true();
 
-    if (node->need_delete_eval_object())
-      delete val;
+    delete val;
 
     if (res) {
       Memory::pc = dest;
@@ -156,13 +155,12 @@ std::string IfTrueJmp::to_string() const {
 }
 
 ObjectBase *IfTrueJmp::eval() {
-  auto val = cond->eval();
+  auto val = cond->eval_with_create();
   if (val->is_true())
     Memory::pc = dest;
   else
     Memory::pc = false_dest;
-  if (cond->need_delete_eval_object())
-    delete val;
+  delete val;
   return nullptr;
 }
 
@@ -199,7 +197,7 @@ end:
   int end_pos = block.size() - 1;
   check_stmt->false_dest = end_pos;
 
-  // clear 
+  // clear
   loop_body.clear();
 }
 } // namespace cake

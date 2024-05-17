@@ -20,7 +20,7 @@ enum TokenKind : uint8_t {
   RETURN,
   LPAR, RPAR, LSB/*[*/, RSB, /*]*/ 
   BEGIN,END, // {}
-  SEMI,COLON,COMMA, // ; : ,
+  DOT,SEMI,COLON,COMMA, //., ; : ,
   NIL /*end of file or tokens*/
 };
 
@@ -34,6 +34,8 @@ struct Token {
   int64_t get_int() const { return std::stoi(std::string{text}); }
   std::string get_file_pos() const;
   std::string get_file_name() const;
+  // if the token is string to get raw text.
+  std::string string_raw_text()const;
   std::string_view text;
 
   TokenKind kind;
@@ -57,6 +59,7 @@ public:
   [[noreturn]] void error(Token tok, const std::string &msg);
   std::string get_filename() const;
   bool reach_to_end() { return peek(0).kind == TokenKind::NIL; }
+  int get_cur_line() const { return line; }
 
 private:
   void skip_space();
@@ -65,7 +68,7 @@ private:
   Token create_token(TokenKind kind, string_view str);
 
   Token scan_string_literal();
-  
+
   int file_idx = 0;
   std::string text;
   // current position of text.

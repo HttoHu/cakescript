@@ -4,6 +4,8 @@
 #include <lexer.h>
 #include <map>
 #include <unordered_map>
+#include <utils.h>
+
 namespace cake {
 
 TokenKind Token::get_word_kind(string_view word) {
@@ -45,6 +47,15 @@ std::string Token::get_file_pos() const {
 
 std::string Token::get_file_name() const { return Context::global_context()->get_source_file(file_no); }
 
+std::string Token::string_raw_text() const {
+  if (kind != STRING)
+    throw std::runtime_error("internel error parse string failed, not a string token!");
+  auto res = utils::conv_escape(text.substr(1, text.size() - 2));
+  // scanner should make sure the string literal is illegal.
+  if (!res)
+    throw std::runtime_error("internel error parse string failed!");
+  return *res;
+}
 Scanner::Scanner(std::string _text, std::string filename) : text(_text) {
   file_idx = Context::global_context()->add_source_file(filename);
 }
@@ -99,6 +110,8 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::BEGIN, "{");
   case '}':
     return create_token(TokenKind::END, "}");
+  case '.':
+    return create_token(TokenKind::DOT, ".");
   case ',':
     return create_token(TokenKind::COMMA, ",");
   case ':':

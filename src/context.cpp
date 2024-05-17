@@ -30,10 +30,7 @@ size_t Context::cblk_vcnt() const { return sym_tab->cfunc_vcnt(); }
 
 void Context::run() {
   for (auto &stmt : global_stmts) {
-    if (stmt->need_delete_eval_object())
-      delete stmt->eval();
-    else
-      stmt->eval();
+    stmt->eval_no_value();
   }
 }
 

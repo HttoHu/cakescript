@@ -48,11 +48,7 @@ std::string VarDecl::to_string() const {
 
 ObjectBase *VarDecl::eval() {
   for (auto &unit : var_decls) {
-    auto val = unit.init_expr->eval();
-    if (unit.init_expr->need_delete_eval_object())
-      Memory::gmem.get_local(unit.stac_index) = val;
-    else
-      Memory::gmem.get_local(unit.stac_index) = val->clone();
+    Memory::gmem.get_local(unit.stac_index) = unit.init_expr->eval_with_create();
   }
   return nullptr;
 }

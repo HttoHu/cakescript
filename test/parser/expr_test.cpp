@@ -16,10 +16,9 @@ static std::string eval_text(const std::string &str) {
   cake::Parser parser(std::move(scanner));
   auto node = parser.parse_expr();
   std::string ret;
-  auto obj = node->eval();
+  auto obj = node->eval_with_create();
   ret = obj->to_string();
-  if (node->need_delete_eval_object())
-    delete obj;
+  delete obj;
   return ret;
 }
 

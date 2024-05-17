@@ -16,6 +16,7 @@ add_executable(unit
   ./parser/loop_branch_test.cpp
   ./runtime/func_test.cpp
   ./runtime/array_test.cpp
+  ./runtime/object_test.cpp
 )
 target_link_libraries(unit 
   GTest::gtest_main

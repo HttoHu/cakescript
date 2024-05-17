@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
 #include <utils.h>
@@ -27,8 +29,12 @@ public:
   virtual ObjectBase *gt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *ge(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
-  virtual ObjectBase *&visit(int idx) { unreachable(); }
-  virtual ObjectBase *&visit(std::string_view idx) { unreachable(); }
+  virtual ObjectBase **visit(int idx) { unreachable(); }
+  // must return cloned object
+  virtual ObjectBase *visitVal(int idx) { unreachable(); }
+  virtual ObjectBase **visit(const string &idx) { unreachable(); }
+  // must return cloned object
+  virtual ObjectBase *visitVal(const string &idx) { unreachable(); }
 
 private:
 };
@@ -78,7 +84,6 @@ public:
       return std::get<int64_t>(data);
     return std::get<double>(data);
   }
-
   void reset_val(ValType val) { data = val; }
   ObjectBase *add(ObjectBase *rhs) override;
   ObjectBase *sub(ObjectBase *rhs) override;
@@ -101,6 +106,12 @@ public:
 
 private:
 };
+class UndefinedObject : public ObjectBase {
+public:
+  std::string to_string() const override { return "undefined"; }
+
+private:
+};
 class StringObject : public ObjectBase {
 public:
   StringObject(std::string _str) : str(std::move(_str)) {}
@@ -110,8 +121,8 @@ public:
 
   std::string to_raw_format() const;
 
-private:
   std::string str;
+private:
 };
 
 class ArrayObject : public ObjectBase {
@@ -123,17 +134,20 @@ public:
   }
 
   ObjectBase *clone() const override { return new ArrayObject(objects); }
-  ObjectBase *&visit(int idx) override {
+  ObjectBase **visit(int idx) override {
     if (idx >= objects->arr.size())
-      cake_runtime_error("array object range overflow!");
-    return objects->arr[idx];
+      return nullptr;
+    return &objects->arr[idx];
+  }
+  ObjectBase *visitVal(int idx) override {
+    if (idx >= objects->arr.size())
+      return new UndefinedObject();
+    return objects->arr[idx]->clone();
   }
   std::string to_string() const override;
   ~ArrayObject() {
     objects->useCnt--;
     if (!objects->useCnt) {
-      for (auto item : objects->arr)
-        delete item;
       delete objects;
     }
   }
@@ -143,9 +157,81 @@ private:
   struct ArrayData {
     vector<ObjectBase *> arr;
     int useCnt = 0;
+    ~ArrayData() {
+      for (auto item : arr)
+        delete item;
+    }
   };
   ArrayObject(ArrayData *val) : objects(val) { objects->useCnt++; }
   ArrayData *objects;
 };
 
+class StructObject : public ObjectBase {
+private:
+  using StructTabTy = std::vector<std::pair<std::string, ObjectBase *>>;
+
+  struct StructData {
+    StructData(StructTabTy _tab) : tab(std::move(_tab)), useCnt(1) {}
+    std::vector<std::pair<std::string, ObjectBase *>> tab;
+    ObjectBase **addNewObject(const std::string &key, ObjectBase *val) {
+      auto res = std::lower_bound(tab.begin(), tab.end(), std::pair<std::string, ObjectBase *>{key, nullptr},
+                                  [](const auto &p1, const auto &p2) { return p1.first < p2.first; });
+      if (res->first == key) {
+        res->second = val;
+        return &res->second;
+      }
+      tab.push_back({key, val});
+      return &tab.back().second;
+    }
+    ObjectBase *&findObject(const std::string &key) {
+      auto res = std::lower_bound(tab.begin(), tab.end(), std::pair<std::string, ObjectBase *>{key, nullptr},
+                                  [](const auto &p1, const auto &p2) { return p1.first < p2.first; });
+      if (res->first == key)
+        return res->second;
+      cake_runtime_error("undefined member " + key);
+    }
+    int useCnt;
+    ~StructData() {
+      for (auto &[k, v] : tab)
+        delete v;
+    }
+  } * data;
+  StructObject(StructData *_data) : data(_data) { data->useCnt++; }
+
+public:
+  StructObject(StructTabTy tab) { data = new StructData(std::move(tab)); }
+  ~StructObject() {
+    data->useCnt--;
+    if (!data->useCnt)
+      delete data;
+  }
+  StructObject *clone() const override { return new StructObject(data); }
+  ObjectBase **visit(const string &idx) override {
+    for (auto &item : data->tab) {
+      if (item.first == idx)
+        return &item.second;
+    }
+    data->tab.push_back({idx, nullptr});
+    return &data->tab.back().second;
+  }
+  ObjectBase *visitVal(const std::string &idx) override {
+    for (auto &item : data->tab) {
+      if (item.first == idx)
+        return item.second->clone();
+    }
+    return new UndefinedObject;
+  }
+  std::string to_string() const override {
+    std::string ret = "{ ";
+    bool first = true;
+    for (auto &[key, val] : data->tab) {
+      if (!first)
+        ret += ", ";
+      first = false;
+      ret += key + ": " + val->to_string();
+    }
+    ret += "}";
+    return ret;
+  }
+};
 } // namespace cake

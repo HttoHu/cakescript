@@ -25,7 +25,7 @@ ObjectBase *CallNode::eval() {
   std::vector<ObjectBase *> args_obj;
   args_obj.reserve(args.size());
   for (auto &it : args) {
-    args_obj.emplace_back(it->eval()->clone());
+    args_obj.emplace_back(it->eval());
   }
   auto ret = executor->apply(std::move(args_obj));
   return ret;

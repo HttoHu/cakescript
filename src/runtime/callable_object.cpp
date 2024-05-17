@@ -8,7 +8,7 @@ ObjectBase *FunctionObject::apply(std::vector<ObjectBase *> args) {
   for (int i = 0; i < args.size(); i++)
     Memory::gmem.get_local(i) = args[i];
   for (Memory::pc = 0; Memory::pc < insts.size(); Memory::pc++) {
-    insts[Memory::pc]->eval();
+    insts[Memory::pc]->eval_no_value();
   }
   Memory::gmem.end_func();
   auto ret = Memory::gmem.func_ret;

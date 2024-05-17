@@ -22,6 +22,7 @@ std::vector<AstNodePtr> Parser::parse_stmts() {
   }
   return ret;
 }
+
 std::vector<AstNodePtr> Parser::parse_global() {
   std::vector<AstNodePtr> stmts = parse_stmts();
   std::vector<AstNodePtr> ret;
@@ -35,10 +36,11 @@ std::vector<AstNodePtr> Parser::parse_global() {
   }
   return ret;
 }
+
 std::vector<AstNodePtr> Parser::parse_block() {
   Context::global_symtab()->new_block();
   bool have_begin = false;
-  if (peek(0).kind == BEGIN) {
+  if (peek(0).kind == BEGIN) {      
     match(BEGIN);
     auto ret = parse_stmts();
     match(END);
@@ -52,6 +54,7 @@ std::vector<AstNodePtr> Parser::parse_block() {
     return ret;
   }
 }
+
 AstNodePtr Parser::parse_stmt() {
   AstNodePtr ret;
   switch (peek(0).kind) {
