@@ -111,6 +111,7 @@ public:
   ObjectBase *eval_with_create() override { return result_tmp->clone(); }
   std::string to_string() const override { return result_tmp->to_string(); }
   ~Literal() {
+    // BUG: unit test segmentation fault
     // if (result_tmp)
     //   delete result_tmp;
   }

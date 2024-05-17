@@ -52,6 +52,8 @@ TEST(parserTest, DeclTest1) {
               "syntax error: unknown file!:4:4:assign operation expect left value in the left side! ");
   }
   EXPECT_TRUE(ok);
+  Context::global_context()->clear();
+  Memory::gmem.clear();
 }
 
 TEST(parserTest, DeclTest2) {
@@ -84,7 +86,7 @@ c=b-3*a;
   EXPECT_EQ(get_var_val("a")->to_string(), "-1");
   EXPECT_EQ(get_var_val("b")->to_string(), "-1");
   EXPECT_EQ(get_var_val("c")->to_string(), "2");
-  Memory::gmem.clear();
   Context::global_context()->clear();
+  Memory::gmem.clear();
 }
 #endif
