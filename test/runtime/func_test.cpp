@@ -8,7 +8,6 @@
 #ifndef DISABLE_UNIT
 TEST(runtimeTest, FunctionTest1) {
   using namespace cake;
-  cake::Context::global_symtab()->new_block();
   auto text = ::utils::read_file("./data/function/case1.js");
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));

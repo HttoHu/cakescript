@@ -13,8 +13,8 @@ Context *Context::global_context() {
 
   if (!ret) {
     ret = new Context();
-    inter_funcs::reg_func(*ret->sym_tab, "print",inter_funcs::print);
-    inter_funcs::reg_func(*ret->sym_tab, "length",inter_funcs::length);
+    inter_funcs::reg_func(*ret->sym_tab, "print", inter_funcs::print);
+    inter_funcs::reg_func(*ret->sym_tab, "length", inter_funcs::length);
     return ret;
   }
   return ret;
@@ -23,6 +23,7 @@ SymbolTable *Context::global_symtab() { return global_context()->sym_tab; }
 
 void Context::clear() {
   sym_tab->clear();
+  sym_tab->new_block();
   source_file_list.resize(1);
 }
 size_t Context::cblk_vcnt() const { return sym_tab->cfunc_vcnt(); }
