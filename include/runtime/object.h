@@ -28,6 +28,14 @@ public:
   virtual ObjectBase *lt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *gt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *ge(ObjectBase *rhs) { abort(); }
+
+  virtual void sadd(ObjectBase *rhs) { cake_runtime_error("unsupport operation +="); }
+  virtual void ssub(ObjectBase *rhs) { cake_runtime_error("unsupport operation -="); }
+  virtual void sdiv(ObjectBase *rhs) { cake_runtime_error("unsupport operation /="); }
+  virtual void smul(ObjectBase *rhs) { cake_runtime_error("unsupport operation *="); }
+  virtual void inc() { cake_runtime_error("unsupport operation ++"); }
+  virtual void dec() { cake_runtime_error("unsupport operation --"); }
+
   // the return value should be cloned
   virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
   virtual ObjectBase **visit(int idx) { unreachable(); }
@@ -39,53 +47,22 @@ public:
 
 private:
 };
-class NumberObject : public ObjectBase {
+
+class IntegerObject : public ObjectBase {
 public:
   using ValType = variant<int64_t, double>;
-  NumberObject(ValType val) : data(val) {}
-  NumberObject(bool val) : data((int64_t)val) {}
-  NumberObject(int64_t val) : data(val) {}
-  NumberObject(double val) : data(val) {}
-  NumberObject() : data((int64_t)0) {}
-  static int64_t get_integer_strict(ObjectBase *obj) {
-    if (auto integer = dynamic_cast<NumberObject *>(obj))
-      return std::get<int64_t>(integer->data);
+  IntegerObject(bool val) : data((int64_t)val) {}
+  IntegerObject(int64_t val) : data(val) {}
+  IntegerObject() : data((int64_t)0) {}
+  static int64_t get_integer(ObjectBase *obj) {
+    if (auto integer = dynamic_cast<IntegerObject *>(obj))
+      return integer->data;
     cake_runtime_error("get integer from an object " + obj->to_string() + "failed!");
   }
-  bool is_true() const override {
-    if (!data.index())
-      return std::get<int64_t>(data);
-    else
-      return std::get<double>(data);
-  }
-
-  std::string to_string() const override {
-    std::string ret;
-    std::visit(
-        [&](auto &&val) {
-          using T = std::decay_t<decltype(val)>;
-          if constexpr (std::is_same_v<T, int64_t>) {
-            ret = std::to_string(val);
-          } else if constexpr (std::is_same_v<T, double>)
-            ret = std::to_string(val);
-          else
-            ret = "NaN";
-        },
-        data);
-    return ret;
-  }
-  double to_double() const {
-    if (!data.index())
-      return std::get<int64_t>(data);
-    return std::get<double>(data);
-  }
-
-  int64_t to_int() const {
-    if (!data.index())
-      return std::get<int64_t>(data);
-    return std::get<double>(data);
-  }
-  void reset_val(ValType val) { data = val; }
+  bool is_true() const override { return data; }
+  int64_t get_int() const { return data; }
+  std::string to_string() const override { return std::to_string(data); }
+  void reset_val(int64_t val) { data = val; }
   ObjectBase *add(ObjectBase *rhs) override;
   ObjectBase *sub(ObjectBase *rhs) override;
   ObjectBase *mul(ObjectBase *rhs) override;
@@ -96,10 +73,16 @@ public:
   ObjectBase *lt(ObjectBase *rhs) override;
   ObjectBase *gt(ObjectBase *rhs) override;
   ObjectBase *ge(ObjectBase *rhs) override;
-  ObjectBase *clone() const override { return new NumberObject(data); }
+  ObjectBase *clone() const override { return new IntegerObject(data); }
+  void sadd(ObjectBase *rhs) override;
+  void ssub(ObjectBase *rhs) override;
+  void sdiv(ObjectBase *rhs) override;
+  void smul(ObjectBase *rhs) override;
+  // void inc() override;
+  // void dec() override;
 
 private:
-  ValType data;
+  int64_t data;
 };
 class NullObject : public ObjectBase {
 public:
@@ -123,6 +106,7 @@ public:
   std::string to_raw_format() const;
 
   std::string str;
+
 private:
 };
 

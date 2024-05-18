@@ -12,21 +12,28 @@ using std::make_unique;
 
 AstNodePtr Parser::parse_expr_imp(int ppred) {
   if (ppred == 1)
+    syntax_error("unsupported expression!");
+
+  if (ppred == 2)
     return parse_unit();
   // clang-format off
   // <kind, precedance, is left to right.
   static std::map<TokenKind, std::pair<int, bool>> pred_tab = {
-      {TokenKind::PLUS, {4, true}},
-      {TokenKind::MINUS, {4, true}},
-      {TokenKind::MUL, {3, true}},
-      {TokenKind::DIV, {3, true}},
+      {TokenKind::PLUS, {6, true}},
+      {TokenKind::MINUS, {6, true}},
+      {TokenKind::MUL, {5, true}},
+      {TokenKind::DIV, {5, true}},
       {TokenKind::LE,{9,true}},
       {TokenKind::LT,{9,true}},
       {TokenKind::GE,{9,true}},
       {TokenKind::GT,{9,true}},
       {TokenKind::EQ,{10,false}},
       {TokenKind::NE,{10,false}},
-      {TokenKind::ASSIGN, {16,false} }
+      {TokenKind::ASSIGN, {16,false} },
+      {TokenKind::SADD, {16,false} },
+      {TokenKind::SSUB, {16,false} },
+      {TokenKind::SMUL, {16,false} },
+      {TokenKind::SDIV, {16,false} },
   };
   // clang-format on
   auto get_pred = [&](TokenKind tag) -> std::pair<int, bool> {
@@ -220,7 +227,7 @@ ObjectBase *BinOp::eval_with_create() {
 TmpObjectPtr BinOp::eval() { return TmpObjectPtr(eval_with_create(), true); }
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
-    result_tmp = new NumberObject((int64_t)std::stoi(std::string{lit.text}));
+    result_tmp = new IntegerObject((int64_t)std::stoi(std::string{lit.text}));
   } else if (lit.kind == TokenKind::STRING) {
     auto str = utils::conv_escape(lit.text.substr(1, lit.text.size() - 2));
     if (!str)
@@ -234,9 +241,23 @@ TmpObjectPtr AssignOp::eval() {
   auto ret = right->eval_with_create();
   auto left_val = left->get_left_val();
   switch (op) {
+  // the object may be reassign an differnt type object, so we need delete old object
   case ASSIGN: {
     delete *left_val;
     *left_val = ret;
+    break;
+  }
+  case SADD: {
+    (*left_val)->sadd(ret);
+    break;
+  case SSUB:
+    (*left_val)->ssub(ret);
+    break;
+  case SMUL:
+    (*left_val)->smul(ret);
+    break;
+  case SDIV:
+    (*left_val)->sdiv(ret);
     break;
   }
   default:

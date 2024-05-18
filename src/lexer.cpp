@@ -89,14 +89,24 @@ Token Scanner::fetch_token() {
     return create_token(TokenKind::NIL, "");
   auto ch = text[pos];
   pos++, col++;
+#define TEST_CHAR(ch, TAG, TEXT)                                                                                       \
+  if (pos < text.size() && text[pos] == ch && ++pos)                                                                   \
+    return create_token(TokenKind::TAG, TEXT);
+
   switch (ch) {
   case '+':
+    TEST_CHAR('=', SADD, "+=")
+    TEST_CHAR('+', INC, "++")
     return create_token(TokenKind::PLUS, "+");
   case '-':
+    TEST_CHAR('=', SADD, "-=")
+    TEST_CHAR('-', DEC, "--")
     return create_token(TokenKind::MINUS, "-");
   case '*':
+    TEST_CHAR('=', SMUL, "*=")
     return create_token(TokenKind::MUL, "*");
   case '/':
+    TEST_CHAR('=', SMUL, "/=")
     return create_token(TokenKind::DIV, "/");
   case '(':
     return create_token(TokenKind::LPAR, "(");
@@ -156,6 +166,7 @@ Token Scanner::fetch_token() {
     }
   }
   }
+#undef TEST_CHAR
 }
 
 Token Scanner::create_token(TokenKind kind, string_view str) {

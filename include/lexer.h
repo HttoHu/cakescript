@@ -11,6 +11,8 @@ using std::string_view;
 enum TokenKind : uint8_t { 
   INTEGER, FLOAT, STRING,IDENTIFIER, 
   PLUS, MINUS, MUL, DIV, 
+  SADD,SSUB,SMUL,SDIV, // +=,-=,*=,/=
+  INC,DEC, // ++,--
   ASSIGN,
   LE,LT,GE,GT,EQ,NE, // compare operations
   AND,OR, // logical operations
@@ -35,7 +37,7 @@ struct Token {
   std::string get_file_pos() const;
   std::string get_file_name() const;
   // if the token is string to get raw text.
-  std::string string_raw_text()const;
+  std::string string_raw_text() const;
   std::string_view text;
 
   TokenKind kind;

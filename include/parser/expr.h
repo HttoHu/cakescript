@@ -71,8 +71,8 @@ public:
       return left_val->visitVal(index);
     else {
       auto index_obj = index->eval_with_create();
-      if (auto *int_index = dynamic_cast<NumberObject *>(index_obj))
-        return left_val->visitVal(int_index->to_int());
+      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj))
+        return left_val->visitVal(int_index->get_int());
       else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
         return left_val->visitVal(str_index->str);
       return new UndefinedObject;
@@ -91,8 +91,8 @@ public:
       return left_val->visit(index);
     else {
       auto index_obj = index->eval_with_create();
-      if (auto *int_index = dynamic_cast<NumberObject *>(index_obj))
-        return left_val->visit(int_index->to_int());
+      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj))
+        return left_val->visit(int_index->get_int());
       else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
         return left_val->visit(str_index->str);
       return nullptr;
