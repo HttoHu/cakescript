@@ -6,6 +6,7 @@
 #include <context.h>
 #include <parser/symbol.h>
 #ifndef DISABLE_UNIT
+
 TEST(runtimeTest, FunctionTest1) {
   using namespace cake;
   auto text = ::utils::read_file("./data/function/case1.js");
@@ -28,3 +29,4 @@ TEST(runtimeTest, FunctionTest1) {
   Memory::pc = 0;
 }
 #endif
+

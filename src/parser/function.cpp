@@ -25,12 +25,14 @@ TmpObjectPtr CallNode::eval() {
   std::vector<TmpObjectPtr> tmps;
   std::vector<ObjectBase *> args_obj;
   args_obj.reserve(args.size());
+  tmps.reserve(args.size());
+
   for (auto &it : args) {
     tmps.push_back(it->eval());
     args_obj.emplace_back(tmps.back().get());
   }
   auto ret = executor->apply(std::move(args_obj));
-  return TmpObjectPtr(ret,true);
+  return TmpObjectPtr(ret, true);
 }
 std::string CallNode::to_string() const {
   std::string ret = "(call " + std::string{func_name.text};
@@ -39,6 +41,25 @@ std::string CallNode::to_string() const {
   return ret + ")";
 }
 
+TmpObjectPtr CallMemberFunction::eval() {
+  auto func = gen_func_node->eval();
+
+  std::vector<TmpObjectPtr> tmps;
+  std::vector<ObjectBase *> args_obj;
+  args_obj.reserve(args.size());
+  tmps.reserve(args.size());
+
+  for (auto &it : args) {
+    tmps.push_back(it->eval());
+    args_obj.emplace_back(tmps.back().get());
+  }
+  // push this to the back of arguments
+  tmps.push_back(object_this->eval());
+  args_obj.emplace_back(tmps.back().get());
+
+  auto ret = func->apply(std::move(args_obj));
+  return TmpObjectPtr(ret, true);
+}
 AstNodePtr Parser::parse_function_def() {
   match(TokenKind::FUNCTION);
   Context::global_symtab()->new_func();
@@ -55,6 +76,7 @@ AstNodePtr Parser::parse_function_def() {
   while (peek(0).kind != RPAR) {
     auto id = peek(0);
     match(IDENTIFIER);
+    func_def->param_size++;
     int idx = Context::global_symtab()->cfunc_vcnt();
     Context::global_symtab()->add_symbol(id.text, new VarSymbol(idx, id.text));
     if (peek(0).kind != RPAR)
@@ -80,7 +102,7 @@ void FunctionDef::gen_func_object() {
   }
   block.clear();
 
-  func_obj = new FunctionObject(frame_size, std::move(insts));
+  func_obj = new FunctionObject(frame_size, param_size, std::move(insts));
   for (auto call_node : use_list)
     call_node->executor = func_obj;
 }

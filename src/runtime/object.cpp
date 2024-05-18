@@ -1,7 +1,12 @@
+#include <map>
+#include <runtime/intern_function.h>
 #include <runtime/object.h>
 #include <utils.h>
 
 namespace cake {
+UndefinedObject *UndefinedObject::global_undefined_obj = new UndefinedObject;
+NullObject *NullObject::global_null_obj = new NullObject;
+
 #define NUMBER_BINOP(FUN_NAME, OP)                                                                                     \
   ObjectBase *IntegerObject::FUN_NAME(ObjectBase *rhs) {                                                               \
     if (auto rv = dynamic_cast<IntegerObject *>(rhs)) {                                                                \
@@ -23,17 +28,17 @@ NUMBER_BINOP(lt, <)
 #undef NUMBER_BINOP
 
 #define NUMBER_SELFASSIGN_OP(FUN_NAME, OP)                                                                             \
-  void IntegerObject::FUN_NAME(ObjectBase *rhs) {                                                                     \
+  void IntegerObject::FUN_NAME(ObjectBase *rhs) {                                                                      \
     if (auto rv = dynamic_cast<IntegerObject *>(rhs)) {                                                                \
-      data OP rv->data;                                                                                             \
+      data OP rv->data;                                                                                                \
     } else                                                                                                             \
       unreachable();                                                                                                   \
   }
 
-NUMBER_SELFASSIGN_OP(sadd,+=)
-NUMBER_SELFASSIGN_OP(ssub,-=)
-NUMBER_SELFASSIGN_OP(smul,-=)
-NUMBER_SELFASSIGN_OP(sdiv,-=)
+NUMBER_SELFASSIGN_OP(sadd, +=)
+NUMBER_SELFASSIGN_OP(ssub, -=)
+NUMBER_SELFASSIGN_OP(smul, -=)
+NUMBER_SELFASSIGN_OP(sdiv, -=)
 #undef NUMBER_SELFASSIGN_OP
 
 ObjectBase *StringObject::add(ObjectBase *rhs) {
@@ -62,6 +67,16 @@ std::string StringObject::to_raw_format() const {
   return ret + "\"";
 }
 
+ObjectBase *ArrayObject::visitVal(const string &idx) {
+  if (idx == "length")
+    return new IntegerObject((int64_t)objects->arr.size());
+
+  static std::map<std::string, InternalFunction *> tab = {{"push", new InternalFunction(inter_funcs::_array_push)},{"pop", new InternalFunction(inter_funcs::_array_pop)}};
+  auto res = tab.find(idx);
+  if (res == tab.end())
+    return new UndefinedObject;
+  return res->second->clone();
+}
 std::string ArrayObject::to_string() const {
   std::string ret = "[ ";
   bool first = true;

@@ -37,12 +37,12 @@ cake::ObjectBase *get_var_val(std::string name) {
 
 #ifndef DISABLE_UNIT
 TEST(parserTest, DeclTest1) {
-  EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(vardecl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
-  EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(vardecl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
+  EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(gvar_decl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
+  EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(gvar_decl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
   auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};b=b+1;c=c+1;b=c=5+1;");
-  EXPECT_NE(res.find("(ASSIGN b(0) (PLUS b(0) 1))"), std::string::npos);
-  EXPECT_NE(res.find("(ASSIGN c(1) (PLUS c(1) 1))"), std::string::npos);
-  EXPECT_NE(res.find("(ASSIGN b(0) (ASSIGN c(1) (PLUS 5 1)))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN glob b(0) (PLUS glob b(0) 1))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN glob c(1) (PLUS glob c(1) 1))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN glob b(0) (ASSIGN glob c(1) (PLUS 5 1)))"), std::string::npos);
   bool ok = false;
   try {
     auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};\nb=b+1;\nc=c+1;\nb+1=5+1;");

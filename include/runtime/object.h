@@ -17,7 +17,7 @@ public:
   virtual std::string to_string() const { return "undefined"; }
   virtual ObjectBase *clone() const { abort(); }
   virtual bool is_true() const { abort(); }
-
+  // the return value must be cloned.
   virtual ObjectBase *add(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *sub(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *mul(ObjectBase *rhs) { abort(); }
@@ -39,10 +39,10 @@ public:
   // the return value should be cloned
   virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
   virtual ObjectBase **visit(int idx) { unreachable(); }
-  // must return cloned object
+  // must cloned object
   virtual ObjectBase *visitVal(int idx) { unreachable(); }
   virtual ObjectBase **visit(const string &idx) { unreachable(); }
-  // must return cloned object
+  // return cloned object
   virtual ObjectBase *visitVal(const string &idx) { unreachable(); }
 
 private:
@@ -87,12 +87,16 @@ private:
 class NullObject : public ObjectBase {
 public:
   std::string to_string() const override { return "null"; }
+  ObjectBase *clone() const override { return new NullObject; }
+  static NullObject *global_null_obj;
 
 private:
 };
 class UndefinedObject : public ObjectBase {
 public:
   std::string to_string() const override { return "undefined"; }
+  ObjectBase *clone() const override { return new UndefinedObject; }
+  static UndefinedObject *global_undefined_obj;
 
 private:
 };
@@ -126,9 +130,10 @@ public:
   }
   ObjectBase *visitVal(int idx) override {
     if (idx >= objects->arr.size())
-      return new UndefinedObject();
+      return new UndefinedObject;
     return objects->arr[idx]->clone();
   }
+  ObjectBase *visitVal(const string &idx) override;
   std::string to_string() const override;
   ~ArrayObject() {
     objects->useCnt--;
@@ -137,6 +142,13 @@ public:
     }
   }
   size_t get_array_length() const { return objects->arr.size(); }
+
+  // caller make sure obj is cloned
+  void push_obj(ObjectBase *obj) { objects->arr.push_back(obj); }
+  void pop() {
+    delete objects->arr.back();
+    objects->arr.pop_back();
+  }
 
 private:
   struct ArrayData {

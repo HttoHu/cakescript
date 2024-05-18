@@ -98,7 +98,13 @@ AstNodePtr Parser::parse_unit() {
         syntax_error("member visit must have a left value!");
       auto id = lexer.peek(0);
       match(IDENTIFIER);
+      // call member function
+      auto old_left = left.get();
       left = std::make_unique<VistorMember<std::string>>(std::move(left), std::string{id.text});
+      if (peek(0).kind == LPAR) {
+        auto args = parse_expr_list(LPAR, RPAR);
+        left=std::make_unique<CallMemberFunction>(std::move(left),old_left,std::move(args));
+      }
       break;
     }
     case TokenKind::LSB: {
@@ -238,32 +244,32 @@ Literal::Literal(Token lit) {
 }
 
 TmpObjectPtr AssignOp::eval() {
-  auto ret = right->eval_with_create();
   auto left_val = left->get_left_val();
   switch (op) {
   // the object may be reassign an differnt type object, so we need delete old object
   case ASSIGN: {
-    delete *left_val;
-    *left_val = ret;
-    break;
+    TmpObjectPtr t(*left_val,true);
+    // debug for a long time: right may use left_val, we can't delete left_val before right->eval_with_create()
+    *left_val = right->eval_with_create();
+    return *left_val;
   }
   case SADD: {
-    (*left_val)->sadd(ret);
+    (*left_val)->sadd(right->eval().get());
     break;
   case SSUB:
-    (*left_val)->ssub(ret);
+    (*left_val)->ssub(right->eval().get());
     break;
   case SMUL:
-    (*left_val)->smul(ret);
+    (*left_val)->smul(right->eval().get());
     break;
   case SDIV:
-    (*left_val)->sdiv(ret);
+    (*left_val)->sdiv(right->eval().get());
     break;
   }
   default:
     unreachable();
   }
-  return ret;
+  return *left_val;
 }
 std::string AssignOp::to_string() const {
   switch (op) {

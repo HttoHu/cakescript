@@ -62,7 +62,8 @@ public:
     else
       return "(array_visit " + left->to_string() + " " + index->to_string() + ")";
   }
-  TmpObjectPtr eval() override {
+  TmpObjectPtr eval() override { return TmpObjectPtr(eval_with_create(), true); }
+  ObjectBase *eval_with_create() override {
     auto left_val = left->eval_with_create();
 
     if constexpr (std::is_same_v<INDEX_TY, int64_t>)
@@ -78,7 +79,6 @@ public:
       return new UndefinedObject;
     }
   }
-  ObjectBase *eval_with_create() override { return eval()->clone(); }
   void eval_no_value() override { eval(); }
 
   bool left_value() const override { return true; }
@@ -123,7 +123,11 @@ private:
 template <bool IS_GLO> class Variable : public AstNode {
 public:
   Variable(Token _id, size_t _stac_pos) : id(_id), stac_pos(_stac_pos) {}
-  std::string to_string() const override { return fmt::format("{}({})", id.text, stac_pos); }
+  std::string to_string() const override { 
+    if constexpr(IS_GLO)
+      return fmt::format("glob {}({})", id.text, stac_pos); 
+    return fmt::format("{}({})", id.text, stac_pos); 
+  }
   bool left_value() const override { return true; }
   TmpObjectPtr eval() override {
     if constexpr (IS_GLO)

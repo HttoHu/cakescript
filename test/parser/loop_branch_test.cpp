@@ -70,14 +70,14 @@ while(i < 10){
   auto stmts = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   auto while_node = dynamic_cast<WhileStmt *>(stmts[2].get());
-  EXPECT_EQ(while_node->condition->to_string(), "(LT i(1) 10)");
+  EXPECT_EQ(while_node->condition->to_string(), "(LT glob i(1) 10)");
   EXPECT_EQ(while_node->loop_body.size(), 2);
-  EXPECT_EQ(while_node->loop_body[0]->to_string(), "(ASSIGN sum(0) (PLUS i(1) sum(0)))");
-  EXPECT_EQ(while_node->loop_body[1]->to_string(), "(ASSIGN i(1) (PLUS i(1) 1))");
+  EXPECT_EQ(while_node->loop_body[0]->to_string(), "(ASSIGN glob sum(0) (PLUS glob i(1) glob sum(0)))");
+  EXPECT_EQ(while_node->loop_body[1]->to_string(), "(ASSIGN glob i(1) (PLUS glob i(1) 1))");
   CFGNode::flatten_blocks(stmts);
-  EXPECT_EQ(stmts[2]->to_string(), "(if (LT i(1) 10) goto 2 else 5)");
-  EXPECT_EQ(stmts[3]->to_string(), "(ASSIGN sum(0) (PLUS i(1) sum(0)))");
-  EXPECT_EQ(stmts[4]->to_string(), "(ASSIGN i(1) (PLUS i(1) 1))");
+  EXPECT_EQ(stmts[2]->to_string(), "(if (LT glob i(1) 10) goto 2 else 5)");
+  EXPECT_EQ(stmts[3]->to_string(), "(ASSIGN glob sum(0) (PLUS glob i(1) glob sum(0)))");
+  EXPECT_EQ(stmts[4]->to_string(), "(ASSIGN glob i(1) (PLUS glob i(1) 1))");
   EXPECT_EQ(stmts[5]->to_string(), "(goto 1)");
 
   for (; Memory::pc < stmts.size(); Memory::pc++) {

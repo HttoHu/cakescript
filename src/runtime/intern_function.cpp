@@ -21,4 +21,18 @@ ObjectBase *length(std::vector<ObjectBase *> args) {
   }
   cake_runtime_error("length() expect an array object " + std::to_string(args.size()));
 }
+
+ObjectBase *_array_push(std::vector<ObjectBase *> args) {
+  if (args.size() != 2)
+    cake_runtime_error("Array.push(item): expect one argument! ");
+  static_cast<ArrayObject *>(args[1])->push_obj(args[0]->clone());
+  return new NullObject;
+}
+
+ObjectBase *_array_pop(std::vector<ObjectBase *> args) {
+  if (args.size() != 1)
+    cake_runtime_error("Array.pop(): no need argument! ");
+  static_cast<ArrayObject *>(args[0])->pop();
+  return new NullObject;
+}
 } // namespace cake::inter_funcs
