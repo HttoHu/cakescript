@@ -55,7 +55,7 @@ AstNodePtr Parser::parse_while() {
   return ret;
 }
 
-ObjectBase *Goto::eval() {
+TmpObjectPtr Goto::eval() {
   Memory::pc = dest;
   return nullptr;
 }
@@ -67,12 +67,10 @@ std::string IfWithJmpTable::to_string() const {
   }
   return ret + ")";
 }
-ObjectBase *IfWithJmpTable::eval() {
+TmpObjectPtr IfWithJmpTable::eval() {
   for (auto &[node, dest] : jmp_tab) {
-    auto val = node->eval_with_create();
+    auto val = node->eval();
     bool res = val->is_true();
-
-    delete val;
 
     if (res) {
       Memory::pc = dest;
@@ -154,13 +152,12 @@ std::string IfTrueJmp::to_string() const {
   return fmt::format("(if {} goto {} else {})", cond->to_string(), dest, false_dest);
 }
 
-ObjectBase *IfTrueJmp::eval() {
-  auto val = cond->eval_with_create();
+TmpObjectPtr IfTrueJmp::eval() {
+  auto val = cond->eval();
   if (val->is_true())
     Memory::pc = dest;
   else
     Memory::pc = false_dest;
-  delete val;
   return nullptr;
 }
 

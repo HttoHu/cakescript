@@ -1,9 +1,10 @@
 #pragma once
+#include <basic/tmp_ptr.h>
+#include <fmt/format.h>
 #include <map>
 #include <parser/ast_node.h>
+#include <runtime/mem.h>
 #include <runtime/object.h>
-
-#include <fmt/format.h>
 
 namespace cake {
 using std::map;
@@ -12,7 +13,7 @@ public:
   BinOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
       : left(std::move(_left)), right(std::move(_right)), op(_op) {}
   bool left_value() const override { return op == TokenKind::ASSIGN; }
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
   ObjectBase *eval_with_create() override;
   std::string to_string() const override {
     return fmt::format("({} {} {})", Token::token_kind_str(op), left->to_string(), right->to_string());
@@ -29,10 +30,9 @@ public:
   AssignOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
       : left(std::move(_left)), op(_op), right(std::move(_right)) {}
   bool left_value() const override { return true; }
-  ObjectBase *eval() override;
-  ObjectBase *eval_with_create() override {
-    return eval()->clone();
-  }
+  TmpObjectPtr eval() override;
+  ObjectBase *eval_with_create() override { return eval()->clone(); }
+  void eval_no_value() override { eval(); }
   std::string to_string() const override;
 
 private:
@@ -62,7 +62,7 @@ public:
     else
       return "(array_visit " + left->to_string() + " " + index->to_string() + ")";
   }
-  ObjectBase *eval() override {
+  TmpObjectPtr eval() override {
     auto left_val = left->eval_with_create();
 
     if constexpr (std::is_same_v<INDEX_TY, int64_t>)
@@ -78,8 +78,8 @@ public:
       return new UndefinedObject;
     }
   }
-  ObjectBase *eval_with_create() override { return eval(); }
-  void eval_no_value() override { delete eval(); }
+  ObjectBase *eval_with_create() override { return eval()->clone(); }
+  void eval_no_value() override { eval(); }
 
   bool left_value() const override { return true; }
   ObjectBase **get_left_val() override {
@@ -107,7 +107,7 @@ private:
 class Literal : public AstNode {
 public:
   Literal(Token lit);
-  ObjectBase *eval() override { return result_tmp; }
+  TmpObjectPtr eval() override { return result_tmp; }
   ObjectBase *eval_with_create() override { return result_tmp->clone(); }
   std::string to_string() const override { return result_tmp->to_string(); }
   ~Literal() {
@@ -120,15 +120,22 @@ private:
   ObjectBase *result_tmp = nullptr;
   std::string get_str_from_literal(const std::string &text);
 };
-
-class Variable : public AstNode {
+template <bool IS_GLO> class Variable : public AstNode {
 public:
   Variable(Token _id, size_t _stac_pos) : id(_id), stac_pos(_stac_pos) {}
   std::string to_string() const override { return fmt::format("{}({})", id.text, stac_pos); }
   bool left_value() const override { return true; }
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override {
+    if constexpr (IS_GLO)
+      return Memory::gmem.get_global(stac_pos);
+    return Memory::gmem.get_local(stac_pos);
+  }
   ObjectBase *eval_with_create() override { return eval()->clone(); }
-  ObjectBase **get_left_val() override;
+  ObjectBase **get_left_val() override {
+    if constexpr (IS_GLO)
+      return &Memory::gmem.get_global(stac_pos);
+    return &Memory::gmem.get_local(stac_pos);
+  }
 
 private:
   Token id;
@@ -147,7 +154,7 @@ public:
       ret.back() = '}';
     return ret + ")";
   }
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
 
 private:
   map<std::string, AstNodePtr> object;
@@ -165,7 +172,7 @@ public:
       ret.back() = ']';
     return ret + ")";
   }
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
 
 private:
   std::vector<AstNodePtr> nodes;

@@ -1,16 +1,18 @@
 #pragma once
+#include <basic/tmp_ptr.h>
 #include <lexer.h>
 #include <memory>
 #include <runtime/object.h>
 #include <utils.h>
 namespace cake {
+using TmpObjectPtr = basic::TmpPtr<ObjectBase>;
 class AstNode {
 public:
   virtual ~AstNode() = default;
   // return an object, note that the eval is only to view can't be delete
-  virtual ObjectBase *eval() { unreachable(); };
+  virtual TmpObjectPtr eval() { unreachable(); };
   // return a value that caller should manage.
-  virtual ObjectBase *eval_with_create() { return eval(); }
+  virtual ObjectBase *eval_with_create() { return eval()->clone(); }
   // only to execute some nodes, no value returned.
   virtual void eval_no_value() { eval(); }
   virtual std::string to_string() const { return "unkonwn ast node"; }
@@ -22,7 +24,7 @@ private:
 };
 class EmptyNode : public AstNode {
 public:
-  ObjectBase *eval() override { return nullptr; }
+  TmpObjectPtr eval() override { return nullptr; }
   std::string to_string() const override { return "(empty)"; }
 
 private:

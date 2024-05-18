@@ -8,10 +8,15 @@ AstNodePtr Parser::parse_decl() {
   switch (peek(0).kind) {
   case TokenKind::LET: {
     match(TokenKind::LET);
-    auto ret = std::make_unique<VarDecl>();
+    AstNode *ret;
+    if (Context::global_symtab()->in_global_block())
+      ret = new VarDecl<true>();
+    else
+      ret = new VarDecl<false>();
+
     while (true) {
       auto sym = match(TokenKind::IDENTIFIER);
-      VarDecl::VarDeclUnit vu(sym);
+      VarDeclUnit vu(sym);
       if (peek(0).kind == TokenKind::ASSIGN) {
         match(TokenKind::ASSIGN);
         auto expr = parse_expr();
@@ -20,36 +25,20 @@ AstNodePtr Parser::parse_decl() {
       vu.stac_index = Context::global_symtab()->cfunc_vcnt();
       // add this var to symbol table
       Context::global_symtab()->add_symbol(sym.text, new VarSymbol(vu.stac_index, sym.text));
-      ret->add_unit(std::move(vu));
+      if (Context::global_symtab()->in_global_block())
+        static_cast<VarDecl<true> *>(ret)->add_unit(std::move(vu));
+      else
+        static_cast<VarDecl<false> *>(ret)->add_unit(std::move(vu));
       if (peek(0).kind != COMMA)
         break;
       match(COMMA);
     }
-    return ret;
+    return AstNodePtr(ret);
   }
   case TokenKind::FUNCTION:
     return parse_function_def();
   default:
     syntax_error("unexpected token ");
   }
-}
-
-std::string VarDecl::to_string() const {
-  std::string ret = "(vardecl ";
-  for (auto &[name, init, stac_index] : var_decls) {
-    if (init)
-      ret += fmt::format("({} {} {})", name.text, init->to_string(), stac_index);
-    else
-      ret += fmt::format("({} {})", name.text, stac_index);
-  }
-  ret += ')';
-  return ret;
-}
-
-ObjectBase *VarDecl::eval() {
-  for (auto &unit : var_decls) {
-    Memory::gmem.get_local(unit.stac_index) = unit.init_expr->eval_with_create();
-  }
-  return nullptr;
 }
 } // namespace cake

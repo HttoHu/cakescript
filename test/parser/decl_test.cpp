@@ -32,7 +32,7 @@ cake::ObjectBase *get_var_val(std::string name) {
   auto var_sym = dynamic_cast<VarSymbol *>(sym);
   if (!var_sym)
     return nullptr;
-  return Memory::gmem.get_local(var_sym->get_stac_pos());
+  return Memory::gmem.get_global(var_sym->get_stac_pos());
 }
 
 #ifndef DISABLE_UNIT
@@ -71,7 +71,7 @@ c=b-3*a;
   cake::Parser parser(std::move(scanner));
   auto nodes = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
-  EXPECT_EQ(nodes[0]->eval(), nullptr);
+  EXPECT_EQ(nodes[0]->eval().get(), nullptr);
   EXPECT_EQ(get_var_val("a")->to_string(), "34");
   EXPECT_EQ(get_var_val("b")->to_string(), "1");
 
@@ -81,7 +81,7 @@ c=b-3*a;
 
   EXPECT_EQ(nodes[2]->eval()->to_string(), std::string{"-1"});
   EXPECT_EQ(nodes[3]->eval()->to_string(), std::string{"-1"});
-  EXPECT_EQ(nodes[4]->eval(), nullptr);
+  EXPECT_EQ(nodes[4]->eval().get(), nullptr);
   EXPECT_EQ(nodes[5]->eval()->to_string(), "2");
   EXPECT_EQ(get_var_val("a")->to_string(), "-1");
   EXPECT_EQ(get_var_val("b")->to_string(), "-1");

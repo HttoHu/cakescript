@@ -30,8 +30,12 @@ public:
   void add_use(AstNode *node) { use_list.push_back(node); }
 
   virtual ~Symbol() {}
+  bool is_global() const { return is_glo; }
 
 private:
+  friend class SymbolTable;
+  // to test if the symbol is global
+  bool is_glo = false;
   SymbolKind kind;
   std::string_view name;
   // vistor ,don't hold ownership
@@ -88,15 +92,18 @@ public:
     }
     return nullptr;
   }
-
   void add_symbol(string_view name, Symbol *sym) {
     symbol_table.back().insert({name, sym});
     func_vcnt.back() += sym->get_kind() == SYM_VAR;
+    if (symbol_table.size() <= 2)
+      sym->is_glo = true;
   }
   void add_global_symbol(string_view name, Symbol *sym) {
     symbol_table.front().insert({name, sym});
     func_vcnt.back() += sym->get_kind() == SYM_VAR;
+    sym->is_glo = true;
   }
+  bool in_global_block() const { return symbol_table.size() <= 2; }
   // current block variable count.
   size_t cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {
@@ -109,6 +116,8 @@ public:
 private:
   // to record current function have how many variables. function may be nested in other functions.
   std::vector<size_t> func_vcnt;
+  // the symbol_table[0] is internal global space to store the embeded functions variables
+  // the symbol_table[1] is user-defined global space
   deque<map<string_view, Symbol *>> symbol_table;
 };
 

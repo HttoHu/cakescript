@@ -1,7 +1,7 @@
 #pragma once
 #include <cinttypes>
-#include <vector>
 #include <stdexcept>
+#include <vector>
 namespace cake {
 using byte = uint8_t;
 class ObjectBase;
@@ -17,6 +17,11 @@ public:
     if (offset >= block_size_vec.back())
       throw std::runtime_error("range error!");
     return pool[sp - offset];
+  }
+  ObjectBase *&get_global(int offset) {
+    if (offset >= pool.size())
+      throw std::runtime_error("range error!");
+    return pool[offset];
   }
   void clear();
   void print_status();

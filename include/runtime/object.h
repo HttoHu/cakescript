@@ -28,6 +28,7 @@ public:
   virtual ObjectBase *lt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *gt(ObjectBase *rhs) { abort(); }
   virtual ObjectBase *ge(ObjectBase *rhs) { abort(); }
+  // the return value should be cloned
   virtual ObjectBase *apply(std::vector<ObjectBase *> args) { abort(); }
   virtual ObjectBase **visit(int idx) { unreachable(); }
   // must return cloned object

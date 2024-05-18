@@ -12,7 +12,7 @@ public:
   // erase if and loop stmts and convert into liner IR
   static void flatten_blocks(std::vector<AstNodePtr> &stmts);
   // CFGNode need to transfer
-  ObjectBase *eval() override { abort(); }
+  TmpObjectPtr eval() override { abort(); }
 };
 
 class IfStmt : public CFGNode {
@@ -42,7 +42,7 @@ public:
 class IfWithJmpTable : public AstNode {
 public:
   std::string to_string() const override;
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
   std::vector<pair<AstNodePtr, int>> jmp_tab;
   int false_dest;
 
@@ -51,7 +51,7 @@ private:
 class IfTrueJmp : public AstNode {
 public:
   std::string to_string() const override;
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
   AstNodePtr cond;
   int dest;
   int false_dest;
@@ -61,7 +61,7 @@ public:
   Goto()=default;
   Goto(int d):dest(d){}
   std::string to_string() const override { return "(goto " + std::to_string(dest) + ")"; }
-  ObjectBase *eval() override;
+  TmpObjectPtr eval() override;
   int dest;
 
 private:

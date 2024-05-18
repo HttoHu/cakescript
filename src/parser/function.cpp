@@ -21,14 +21,16 @@ std::vector<AstNodePtr> Parser::parse_expr_list(TokenKind begin, TokenKind end) 
   match(end);
   return ret;
 }
-ObjectBase *CallNode::eval() {
+TmpObjectPtr CallNode::eval() {
+  std::vector<TmpObjectPtr> tmps;
   std::vector<ObjectBase *> args_obj;
   args_obj.reserve(args.size());
   for (auto &it : args) {
-    args_obj.emplace_back(it->eval());
+    tmps.push_back(it->eval());
+    args_obj.emplace_back(tmps.back().get());
   }
   auto ret = executor->apply(std::move(args_obj));
-  return ret;
+  return TmpObjectPtr(ret,true);
 }
 std::string CallNode::to_string() const {
   std::string ret = "(call " + std::string{func_name.text};
@@ -83,7 +85,7 @@ void FunctionDef::gen_func_object() {
     call_node->executor = func_obj;
 }
 
-ObjectBase *RetNode::eval() {
+TmpObjectPtr RetNode::eval() {
   Memory::gmem.func_ret = expr->eval_with_create();
   // set a very large number to jump out of function.
   Memory::gmem.pc = 0x3f3f3f3f;

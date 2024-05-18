@@ -131,7 +131,10 @@ AstNodePtr Parser::parse_unit() {
       if (!sym)
         syntax_error("undefined symbol " + std::string{tok.text}, tok);
       if (sym->get_kind() == SYM_VAR) {
-        left = make_unique<Variable>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
+        if (sym->is_global())
+          left = make_unique<Variable<true>>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
+        else
+          left = make_unique<Variable<false>>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
         break;
       } else if (sym->get_kind() == SYM_FUNC) {
         auto func = FunctionSymbol::get_func_def(sym);
@@ -193,10 +196,11 @@ AstNodePtr Parser::parse_unit() {
   return left;
 }
 ObjectBase *BinOp::eval_with_create() {
-  auto lval = left->eval(), rval = right->eval();
+  auto lval = left->eval();
+  auto rval = right->eval();
 #define BIN_OP_MP(TAG, OP)                                                                                             \
   case TokenKind::TAG: {                                                                                               \
-    return lval->OP(rval);                                                                                             \
+    return lval->OP(rval.get());                                                                                       \
   }
   switch (op) {
     BIN_OP_MP(PLUS, add)
@@ -213,7 +217,7 @@ ObjectBase *BinOp::eval_with_create() {
     abort();
   }
 }
-ObjectBase *BinOp::eval() { return eval_with_create(); }
+TmpObjectPtr BinOp::eval() { return TmpObjectPtr(eval_with_create(), true); }
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
     result_tmp = new NumberObject((int64_t)std::stoi(std::string{lit.text}));
@@ -226,12 +230,15 @@ Literal::Literal(Token lit) {
     unreachable();
 }
 
-ObjectBase *AssignOp::eval() {
+TmpObjectPtr AssignOp::eval() {
   auto ret = right->eval_with_create();
+  auto left_val = left->get_left_val();
   switch (op) {
-  case ASSIGN:
-    *left->get_left_val() = right->eval_with_create();
+  case ASSIGN: {
+    delete *left_val;
+    *left_val = ret;
     break;
+  }
   default:
     unreachable();
   }
@@ -245,21 +252,18 @@ std::string AssignOp::to_string() const {
     return "(unknown assign op)";
   }
 }
-ObjectBase *Variable::eval() { return Memory::gmem.get_local(stac_pos); }
 
-ObjectBase **Variable::get_left_val() { return &Memory::gmem.get_local(stac_pos); }
-
-ObjectBase *ObjectNode::eval() {
+TmpObjectPtr ObjectNode::eval() {
   std::vector<std::pair<std::string, ObjectBase *>> tab;
   for (auto &[k, v] : object)
     tab.push_back({k, v->eval_with_create()});
   return new StructObject(std::move(tab));
 }
 
-ObjectBase *ArrayNode::eval() {
+TmpObjectPtr ArrayNode::eval() {
   std::vector<ObjectBase *> arr;
   for (auto &node : nodes)
     arr.push_back(node->eval_with_create());
-  return new ArrayObject(std::move(arr));
+  return TmpObjectPtr(new ArrayObject(std::move(arr)), true);
 }
 } // namespace cake
