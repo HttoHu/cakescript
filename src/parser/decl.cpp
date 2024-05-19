@@ -26,7 +26,9 @@ AstNodePtr Parser::parse_decl() {
       // add this var to symbol table
       Context::global_symtab()->add_symbol(sym.text, new VarSymbol(vu.stac_index, sym.text));
       if (Context::global_symtab()->in_global_block())
+      {
         static_cast<VarDecl<true> *>(ret)->add_unit(std::move(vu));
+      }
       else
         static_cast<VarDecl<false> *>(ret)->add_unit(std::move(vu));
       if (peek(0).kind != COMMA)

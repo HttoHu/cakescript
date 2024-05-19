@@ -10,9 +10,11 @@ ObjectBase *FunctionObject::apply(std::vector<ObjectBase *> args) {
     insts[Memory::pc]->eval_no_value();
   }
   Memory::gmem.end_func();
+  // the value of func_ret is cloned.
   auto ret = Memory::gmem.func_ret;
   if (!ret)
     return new NullObject;
-  return ret->clone();
+  Memory::gmem.func_ret = nullptr;
+  return ret;
 }
 } // namespace cake

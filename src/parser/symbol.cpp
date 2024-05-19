@@ -21,7 +21,7 @@ void SymbolTable::fill_undefined_func_nodes(FunctionDef *func_def) {
     return true;
   };
   while (it != call_without_func_def.end()) {
-    if (is_prefix_of(it->first, cur_block_seqs)) {
+    if (is_prefix_of(cur_block_seqs, it->first)) {
       if (it->second->get_func_name() == func_def->get_func_name()) {
         func_def->add_use(it->second);
         it = call_without_func_def.erase(it);

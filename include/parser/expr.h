@@ -75,17 +75,17 @@ public:
   }
   TmpObjectPtr eval() override { return TmpObjectPtr(eval_with_create(), true); }
   ObjectBase *eval_with_create() override {
-    auto left_val = left->eval_with_create();
+    auto left_val = left->eval();
 
     if constexpr (std::is_same_v<INDEX_TY, int64_t>)
       return left_val->visitVal(index);
     else if constexpr (std::is_same_v<INDEX_TY, std::string>)
       return left_val->visitVal(index);
     else {
-      auto index_obj = index->eval_with_create();
-      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj))
+      auto index_obj = index->eval();
+      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj.get()))
         return left_val->visitVal(int_index->get_int());
-      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
+      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj.get()))
         return left_val->visitVal(str_index->str);
       return new UndefinedObject;
     }
@@ -94,17 +94,17 @@ public:
 
   bool left_value() const override { return true; }
   ObjectBase **get_left_val() override {
-    auto left_val = left->eval_with_create();
+    auto left_val = left->eval();
 
     if constexpr (std::is_same_v<INDEX_TY, int64_t>)
       return left_val->visit(index);
     else if constexpr (std::is_same_v<INDEX_TY, std::string>)
       return left_val->visit(index);
     else {
-      auto index_obj = index->eval_with_create();
-      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj))
+      auto index_obj = index->eval();
+      if (auto *int_index = dynamic_cast<IntegerObject *>(index_obj.get()))
         return left_val->visit(int_index->get_int());
-      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj))
+      else if (auto *str_index = dynamic_cast<StringObject *>(index_obj.get()))
         return left_val->visit(str_index->str);
       return nullptr;
     }

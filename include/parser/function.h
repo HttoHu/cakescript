@@ -53,7 +53,9 @@ public:
   CallMemberFunction(AstNodePtr _gen_func, AstNode *_this, std::vector<AstNodePtr> _args)
       : gen_func_node(std::move(_gen_func)), object_this(_this), args(std::move(_args)) {}
   TmpObjectPtr eval() override;
-
+  std::string to_string()const override{
+    return "(call member function)";
+  }
 private:
   AstNodePtr gen_func_node;
   // we need append object_this at the end of the function
@@ -63,6 +65,7 @@ private:
 class RetNode : public AstNode {
 public:
   RetNode(AstNodePtr _expr) : expr(std::move(_expr)) {}
+  // Ret Node is a exception ,the eval will create object to return value.
   TmpObjectPtr eval() override;
   std::string to_string() const override { return "(return " + expr->to_string() + ")"; }
 

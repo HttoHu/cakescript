@@ -329,7 +329,7 @@ TmpObjectPtr ObjectNode::eval() {
   std::vector<std::pair<std::string, ObjectBase *>> tab;
   for (auto &[k, v] : object)
     tab.push_back({k, v->eval_with_create()});
-  return new StructObject(std::move(tab));
+  return TmpObjectPtr(new StructObject(std::move(tab)),true);
 }
 
 TmpObjectPtr ArrayNode::eval() {

@@ -108,7 +108,7 @@ public:
   void add_symbol(string_view name, Symbol *sym) {
     symbol_table.back().insert({name, sym});
     func_vcnt.back() += sym->get_kind() == SYM_VAR;
-    if (symbol_table.size() <= 2)
+    if (in_global_block())
       sym->is_glo = true;
   }
   void add_global_symbol(string_view name, Symbol *sym) {
@@ -116,7 +116,7 @@ public:
     func_vcnt.back() += sym->get_kind() == SYM_VAR;
     sym->is_glo = true;
   }
-  bool in_global_block() const { return symbol_table.size() <= 2; }
+  bool in_global_block() const { return func_vcnt.size() ==1; }
   // current block variable count.
   size_t &cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {
