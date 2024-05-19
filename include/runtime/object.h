@@ -78,8 +78,8 @@ public:
   void ssub(ObjectBase *rhs) override;
   void sdiv(ObjectBase *rhs) override;
   void smul(ObjectBase *rhs) override;
-  // void inc() override;
-  // void dec() override;
+  void inc() override { data++; }
+  void dec() override { data--; }
 
 private:
   int64_t data;

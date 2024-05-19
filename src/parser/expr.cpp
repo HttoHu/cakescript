@@ -16,11 +16,17 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
 
   if (ppred == 2)
     return parse_unit();
+  else if (ppred == 3)
+    return parse_unary();
   // clang-format off
   // <kind, precedance, is left to right.
+  // although it is a JS-like interpreter, the precedence refered from 
+  // https://en.cppreference.com/w/cpp/language/operator_precedence
   static std::map<TokenKind, std::pair<int, bool>> pred_tab = {
       {TokenKind::PLUS, {6, true}},
-      {TokenKind::MINUS, {6, true}},
+      {TokenKind::MINUS, {6, true}}, // binary operation minus
+      {TokenKind::INC,{3,false}},
+      {TokenKind::DEC,{3,false}}, // in cakescript, DEC,INC don't have Associativity, you can't write - -a,or -- -- a
       {TokenKind::MUL, {5, true}},
       {TokenKind::DIV, {5, true}},
       {TokenKind::LE,{9,true}},
@@ -103,7 +109,7 @@ AstNodePtr Parser::parse_unit() {
       left = std::make_unique<VistorMember<std::string>>(std::move(left), std::string{id.text});
       if (peek(0).kind == LPAR) {
         auto args = parse_expr_list(LPAR, RPAR);
-        left=std::make_unique<CallMemberFunction>(std::move(left),old_left,std::move(args));
+        left = std::make_unique<CallMemberFunction>(std::move(left), old_left, std::move(args));
       }
       break;
     }
@@ -208,6 +214,21 @@ AstNodePtr Parser::parse_unit() {
     syntax_error("parse unit failed!");
   return left;
 }
+
+AstNodePtr Parser::parse_unary() {
+  auto op_kind = peek(0).kind;
+  switch (op_kind) {
+  case INC:
+  case DEC:
+  case MINUS:
+    lexer.next_token();
+    return std::make_unique<UnaryOp>(op_kind, parse_unit());
+  default:
+    // not an unary node.
+    return parse_unit();
+  }
+}
+
 ObjectBase *BinOp::eval_with_create() {
   auto lval = left->eval();
   auto rval = right->eval();
@@ -227,7 +248,7 @@ ObjectBase *BinOp::eval_with_create() {
     BIN_OP_MP(LE, le)
     BIN_OP_MP(LT, lt)
   default:
-    abort();
+    cake_runtime_error("bianry op: unsupported operation!");
   }
 }
 TmpObjectPtr BinOp::eval() { return TmpObjectPtr(eval_with_create(), true); }
@@ -240,7 +261,7 @@ Literal::Literal(Token lit) {
       unreachable();
     result_tmp = new StringObject(*str);
   } else
-    unreachable();
+    cake_runtime_error("unknown literal");
 }
 
 TmpObjectPtr AssignOp::eval() {
@@ -248,7 +269,7 @@ TmpObjectPtr AssignOp::eval() {
   switch (op) {
   // the object may be reassign an differnt type object, so we need delete old object
   case ASSIGN: {
-    TmpObjectPtr t(*left_val,true);
+    TmpObjectPtr t(*left_val, true);
     // debug for a long time: right may use left_val, we can't delete left_val before right->eval_with_create()
     *left_val = right->eval_with_create();
     return *left_val;
@@ -292,5 +313,23 @@ TmpObjectPtr ArrayNode::eval() {
   for (auto &node : nodes)
     arr.push_back(node->eval_with_create());
   return TmpObjectPtr(new ArrayObject(std::move(arr)), true);
+}
+
+ObjectBase *UnaryOp::eval_with_create() {
+  auto operand = expr->eval();
+  switch (unary_op) {
+  case INC:
+    operand->inc();
+    return operand->clone();
+  case DEC:
+    operand->dec();
+    return operand->clone();
+  case MINUS: {
+    auto val = static_cast<IntegerObject *>(operand.get())->get_int();
+    return new IntegerObject(-val);
+  }
+  default:
+    cake_runtime_error("unknown unary op");
+  }
 }
 } // namespace cake

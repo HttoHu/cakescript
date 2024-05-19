@@ -23,6 +23,8 @@ public:
 private:
   Scanner lexer;
   AstNodePtr parse_unit();
+  // precedence : 3, ++,--,-
+  AstNodePtr parse_unary();
   AstNodePtr parse_binary();
   AstNodePtr parse_expr_imp(int pred);
 

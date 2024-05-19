@@ -41,14 +41,16 @@ private:
 };
 class UnaryOp : public AstNode {
 public:
+  UnaryOp(TokenKind _op, AstNodePtr _expr) : unary_op(_op), expr(std::move(_expr)) {}
   std::string to_string() const override {
     return fmt::format("({} {})", Token::token_kind_str(unary_op), expr->to_string());
   }
+  TmpObjectPtr eval() override { return TmpObjectPtr(eval_with_create(), true); }
+  ObjectBase *eval_with_create() override;
 
 private:
   TokenKind unary_op;
   AstNodePtr expr;
-  ObjectBase *result_tmp;
 };
 
 template <typename INDEX_TY> class VistorMember : public AstNode {
@@ -123,10 +125,10 @@ private:
 template <bool IS_GLO> class Variable : public AstNode {
 public:
   Variable(Token _id, size_t _stac_pos) : id(_id), stac_pos(_stac_pos) {}
-  std::string to_string() const override { 
-    if constexpr(IS_GLO)
-      return fmt::format("glob {}({})", id.text, stac_pos); 
-    return fmt::format("{}({})", id.text, stac_pos); 
+  std::string to_string() const override {
+    if constexpr (IS_GLO)
+      return fmt::format("glob {}({})", id.text, stac_pos);
+    return fmt::format("{}({})", id.text, stac_pos);
   }
   bool left_value() const override { return true; }
   TmpObjectPtr eval() override {

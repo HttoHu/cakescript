@@ -40,7 +40,7 @@ std::vector<AstNodePtr> Parser::parse_global() {
 std::vector<AstNodePtr> Parser::parse_block() {
   Context::global_symtab()->new_block();
   bool have_begin = false;
-  if (peek(0).kind == BEGIN) {      
+  if (peek(0).kind == BEGIN) {
     match(BEGIN);
     auto ret = parse_stmts();
     match(END);
@@ -62,6 +62,9 @@ AstNodePtr Parser::parse_stmt() {
   case LET:
     ret = parse_decl();
     break;
+  case INC:
+  case DEC:
+  case MINUS:
   case LPAR:
   case IDENTIFIER:
   case INTEGER:
@@ -78,7 +81,7 @@ AstNodePtr Parser::parse_stmt() {
     return std::make_unique<RetNode>(std::make_unique<EmptyNode>());
   }
   default:
-    unreachable();
+    syntax_error("unexpected token " + std::string{peek(0).text});
   }
   if (peek(0).kind == SEMI)
     match(SEMI);
