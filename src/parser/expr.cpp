@@ -23,18 +23,17 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
   // although it is a JS-like interpreter, the precedence refered from 
   // https://en.cppreference.com/w/cpp/language/operator_precedence
   static std::map<TokenKind, std::pair<int, bool>> pred_tab = {
-      {TokenKind::PLUS, {6, true}},
-      {TokenKind::MINUS, {6, true}}, // binary operation minus
       {TokenKind::INC,{3,false}},
       {TokenKind::DEC,{3,false}}, // in cakescript, DEC,INC don't have Associativity, you can't write - -a,or -- -- a
       {TokenKind::MUL, {5, true}},
       {TokenKind::DIV, {5, true}},
-      {TokenKind::LE,{9,true}},
-      {TokenKind::LT,{9,true}},
-      {TokenKind::GE,{9,true}},
-      {TokenKind::GT,{9,true}},
-      {TokenKind::EQ,{10,false}},
-      {TokenKind::NE,{10,false}},
+      {TokenKind::PLUS, {6, true}},
+      {TokenKind::MINUS, {6, true}}, // binary operation minus
+      {TokenKind::LSH,{7,true}},{TokenKind::RSH,{7,true}},
+      {TokenKind::LE,{9,true}},{TokenKind::LT,{9,true}},{TokenKind::GE,{9,true}},{TokenKind::GT,{9,true}},
+      {TokenKind::EQ,{10,false}},{TokenKind::NE,{10,false}},
+      {TokenKind::BIT_AND,{11,true}},{TokenKind::BIT_XOR,{12,true}},{TokenKind::BIT_OR,{13,true}},
+      {TokenKind::AND,{14,true}},{TokenKind::OR,{15,true}},
       {TokenKind::ASSIGN, {16,false} },
       {TokenKind::SADD, {16,false} },
       {TokenKind::SSUB, {16,false} },
@@ -215,6 +214,8 @@ AstNodePtr Parser::parse_unit() {
       return ret;
     }
     default:
+      if(!left)
+        syntax_error("parse unit failed!");
       return left;
     }
   }
@@ -244,6 +245,14 @@ ObjectBase *BinOp::eval_with_create() {
   case TokenKind::TAG: {                                                                                               \
     return lval->OP(rval.get());                                                                                       \
   }
+#define INT_BIN_OP(TAG, OP)                                                                                            \
+  case TokenKind::TAG: {                                                                                               \
+    auto l = dynamic_cast<IntegerObject *>(lval.get()), r = dynamic_cast<IntegerObject *>(rval.get());                 \
+    if (!l || !r)                                                                                                      \
+      cake_runtime_error("bitwise op: expect integer operand!");                                                       \
+    return new IntegerObject(l->get_int() OP r->get_int());                                                            \
+  }
+
   switch (op) {
     BIN_OP_MP(PLUS, add)
     BIN_OP_MP(MUL, mul)
@@ -255,6 +264,13 @@ ObjectBase *BinOp::eval_with_create() {
     BIN_OP_MP(GT, gt)
     BIN_OP_MP(LE, le)
     BIN_OP_MP(LT, lt)
+    INT_BIN_OP(LSH, <<)
+    INT_BIN_OP(RSH, >>)
+    INT_BIN_OP(BIT_AND, &)
+    INT_BIN_OP(BIT_OR, |)
+    INT_BIN_OP(BIT_XOR, ^)
+    INT_BIN_OP(AND, &&)
+    INT_BIN_OP(OR, ||)
   default:
     cake_runtime_error("bianry op: unsupported operation!");
   }

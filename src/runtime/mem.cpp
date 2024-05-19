@@ -53,7 +53,7 @@ void Memory::clear() {
       delete it;
   pool.clear();
   pcs.clear();
-  sp = 0;
+  sp = -1;
   block_size_vec.resize(1);
   block_size_vec.back() = 0;
 }

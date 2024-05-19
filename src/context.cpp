@@ -12,7 +12,6 @@ Context::Context() {
 void Context::add_init_expr(AstNodePtr stmt) { init_stmts.push_back(std::move(stmt)); }
 Context *Context::global_context() {
   static Context *ret;
-
   if (!ret) {
     ret = new Context();
     inter_funcs::reg_func(*ret->sym_tab, "print", inter_funcs::print);
@@ -28,7 +27,9 @@ SymbolTable *Context::global_symtab() { return global_context()->sym_tab; }
 void Context::clear() {
   sym_tab->clear();
   sym_tab->new_block();
+  sym_tab->cfunc_vcnt() = init_stmts.size();
   source_file_list.resize(1);
+  global_stmts.clear();
 }
 size_t Context::cblk_vcnt() const { return sym_tab->cfunc_vcnt(); }
 
@@ -40,7 +41,16 @@ void Context::run() {
     global_stmts[Memory::pc]->eval();
   }
   Memory::gmem.end_func();
+  clear();
+  Memory::gmem.clear();
+  Memory::pc = 0;
 }
-
+void Context::dump_stmts() const {
+  for (auto &it : init_stmts)
+    std::cout << it->to_string() << std::endl;
+  for (auto &it : global_stmts) {
+    std::cout << it->to_string() << std::endl;
+  }
+}
 void Context::set_global_stmts(std::vector<AstNodePtr> stmts) { global_stmts = std::move(stmts); }
 } // namespace cake

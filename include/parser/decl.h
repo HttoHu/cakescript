@@ -38,7 +38,7 @@ public:
     if constexpr (IS_GLO)
       ret += "gvar_decl ";
     else
-      ret += "var_decl";
+      ret += "var_decl ";
     for (auto &[name, init, stac_index] : var_decls) {
       if (init)
         ret += fmt::format("({} {} {})", name.text, init->to_string(), stac_index);

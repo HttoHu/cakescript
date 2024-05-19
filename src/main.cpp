@@ -10,10 +10,11 @@ using namespace std;
 using namespace cake;
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
+  if (argc < 2) {
     std::cerr << "expected <filename>!\n";
     exit(1);
   }
+  bool dump_ast = argc >= 3 && argv[2] == std::string{"--dump-ast"};
   try {
     ifstream ifs(argv[1]);
     if (!ifs) {
@@ -23,7 +24,10 @@ int main(int argc, char **argv) {
     cake::Scanner scanner(text);
     cake::Parser parser(std::move(scanner));
     Context::global_context()->set_global_stmts(parser.parse_global());
-    Context::global_context()->run();
+    if (dump_ast)
+      Context::global_context()->dump_stmts();
+    else
+      Context::global_context()->run();
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
     exit(1);

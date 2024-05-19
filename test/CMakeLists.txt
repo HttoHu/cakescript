@@ -17,6 +17,7 @@ add_executable(unit
   ./runtime/func_test.cpp
   ./runtime/array_test.cpp
   ./runtime/object_test.cpp
+  ./runtime/expr_runtest.cpp
 )
 target_link_libraries(unit 
   GTest::gtest_main

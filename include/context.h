@@ -28,7 +28,7 @@ public:
   size_t cblk_vcnt() const;
   void set_global_stmts(std::vector<AstNodePtr> stmts);
   void run();
-
+  void dump_stmts()const;
 private:
   vector<string> source_file_list;
   SymbolTable *sym_tab;

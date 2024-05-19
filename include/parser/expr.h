@@ -55,7 +55,7 @@ private:
 class InternalObjCreate : public AstNode {
 public:
   InternalObjCreate(ObjectBase *_obj, int pos) : obj(_obj) {}
-  TmpObjectPtr eval() override { return Memory::gmem.get_global(pos) = obj; }
+  TmpObjectPtr eval() override { return Memory::gmem.get_global(pos) = obj->clone(); }
   std::string to_string() const override { return "(interal object)"; }
 
 private:

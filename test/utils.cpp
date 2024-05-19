@@ -18,20 +18,14 @@ std::string read_file(const std::string &rev_path) {
 
 std::string run_code(const std::string &text) {
   using namespace cake;
-  cake::Context::global_symtab()->new_block();
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
   std::stringstream ss;
   auto old_cout = std::cout.rdbuf();
   std::cout.rdbuf(ss.rdbuf());
-  auto nodes = parser.parse_global();
-  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
-  for (Memory::pc = 0; Memory::pc < nodes.size(); Memory::pc++) {
-    nodes[Memory::pc]->eval();
-  }
-  cake::Context::global_context()->clear();
-  Memory::gmem.clear();
-  Memory::pc = 0;
+  Context::global_context()->set_global_stmts(parser.parse_global());
+  Context::global_context()->run();
+
   std::cout.rdbuf(old_cout);
   return ss.str();
 }

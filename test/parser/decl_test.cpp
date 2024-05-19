@@ -8,6 +8,8 @@ using namespace cake;
 
 static std::string parse_text(const std::string &str) {
   cake::Scanner scanner(str);
+  cake::Context::global_symtab()->new_func();
+
   cake::Parser parser(std::move(scanner));
   auto ret = parser.parse_stmt()->to_string();
   cake::Context::global_context()->clear();
@@ -37,8 +39,8 @@ cake::ObjectBase *get_var_val(std::string name) {
 
 #ifndef DISABLE_UNIT
 TEST(parserTest, DeclTest1) {
-  EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(gvar_decl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
-  EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(gvar_decl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
+  EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(var_decl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
+  EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(var_decl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
   auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};b=b+1;c=c+1;b=c=5+1;");
   EXPECT_NE(res.find("(ASSIGN glob b(0) (PLUS glob b(0) 1))"), std::string::npos);
   EXPECT_NE(res.find("(ASSIGN glob c(1) (PLUS glob c(1) 1))"), std::string::npos);

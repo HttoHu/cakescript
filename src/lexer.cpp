@@ -36,6 +36,10 @@ std::string Token::token_kind_str(TokenKind kind) {
     __TMP_MATH(LE)
     __TMP_MATH(GE)
     __TMP_MATH(GT)
+    __TMP_MATH(LSH)
+    __TMP_MATH(RSH)
+    __TMP_MATH(AND)
+    __TMP_MATH(OR)
   default:
     return "UNKNOWN";
   }
@@ -108,6 +112,16 @@ Token Scanner::fetch_token() {
   case '/':
     TEST_CHAR('=', SMUL, "/=")
     return create_token(TokenKind::DIV, "/");
+  case '%':
+    return create_token(TokenKind::MOD, "%");
+  case '&':
+    TEST_CHAR('&', AND, "&&")
+    return create_token(TokenKind::BIT_AND, "&");
+  case '|':
+    TEST_CHAR('|', OR, "||")
+    return create_token(TokenKind::BIT_OR, "|");
+  case '^':
+    return create_token(TokenKind::BIT_XOR, "^");
   case '(':
     return create_token(TokenKind::LPAR, "(");
   case ')':
@@ -131,13 +145,11 @@ Token Scanner::fetch_token() {
   case '\"':
     return scan_string_literal();
   case '<':
-    if (pos < text.size() && text[pos] == '=' && ++pos)
-      return create_token(TokenKind::LE, "<=");
-    return create_token(TokenKind::LT, "<");
+    TEST_CHAR('=', LE, "<=")
+    else TEST_CHAR('<', LSH, "<<") return create_token(TokenKind::LT, "<");
   case '>':
-    if (pos < text.size() && text[pos] == '=' && ++pos)
-      return create_token(TokenKind::GE, ">=");
-    return create_token(TokenKind::GT, ">");
+    TEST_CHAR('=', GE, ">=")
+    else TEST_CHAR('>', RSH, ">>") return create_token(TokenKind::GT, ">");
   case '!':
     if (pos < text.size() && text[pos] == '=' && ++pos)
       return create_token(TokenKind::NE, "!=");
@@ -185,7 +197,6 @@ void Scanner::skip_space() {
   while (pos < text.size() && isspace(text[pos])) {
     if (text[pos] == '\n')
       line++, col = 0;
-
     col++;
     pos++;
   }
@@ -193,7 +204,6 @@ void Scanner::skip_space() {
   if (pos + 1 < text.size() && text[pos] == '/' && text[pos + 1] == '/') {
     while (pos < text.size() && text[pos] != '\n')
       pos++;
-    line++, col = 1;
     skip_space();
   }
   // cross line comment

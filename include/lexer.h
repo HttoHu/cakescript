@@ -10,7 +10,7 @@ using std::string_view;
 // clang-format off
 enum TokenKind : uint8_t { 
   INTEGER, FLOAT, STRING,IDENTIFIER, 
-  PLUS, MINUS, MUL, DIV, 
+  PLUS, MINUS, MUL, DIV, MOD, LSH, RSH, BIT_AND,BIT_OR,BIT_XOR,
   SADD,SSUB,SMUL,SDIV, // +=,-=,*=,/=
   INC,DEC, // ++,--
   ASSIGN,

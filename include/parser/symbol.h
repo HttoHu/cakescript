@@ -118,12 +118,13 @@ public:
   }
   bool in_global_block() const { return symbol_table.size() <= 2; }
   // current block variable count.
-  size_t cfunc_vcnt() { return func_vcnt.back(); }
+  size_t &cfunc_vcnt() { return func_vcnt.back(); }
   void clear() {
     while (symbol_table.size() > 1)
       end_block();
     func_vcnt.resize(1);
-    func_vcnt[0] = 0;
+    cur_block_seqs.clear();
+    cur_blk_index = 0;
   }
 
   void fill_undefined_func_nodes(FunctionDef *func_def);
