@@ -15,6 +15,7 @@ public:
 
   void add_use(CallNode *node) { use_list.push_back(node); }
   void gen_func_object();
+  std::string_view get_func_name() { return func_name.text; }
 
 private:
   Token func_name;
@@ -28,12 +29,16 @@ public:
       : func_name(_func_name), def(_def), args(std::move(_args)) {
     def->add_use(this);
   }
+  CallNode(Token _func_name, std::vector<AstNodePtr> _args) : func_name(_func_name), args(std::move(_args)) {}
   CallNode(Token _func_name, ObjectBase *callable, std::vector<AstNodePtr> _args)
       : func_name(_func_name), executor(callable), args(std::move(_args)) {}
+
   TmpObjectPtr eval() override;
   std::string to_string() const override;
+  std::string_view get_func_name() { return func_name.text; }
 
 private:
+  friend class SymbolTable;
   union {
     FunctionDef *def;
     ObjectBase *executor;

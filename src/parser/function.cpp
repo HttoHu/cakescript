@@ -28,7 +28,7 @@ TmpObjectPtr CallNode::eval() {
   tmps.reserve(args.size());
 
   for (auto &it : args) {
-    tmps.push_back(it->eval());
+    tmps.emplace_back(it->eval());
     args_obj.emplace_back(tmps.back().get());
   }
   auto ret = executor->apply(std::move(args_obj));
@@ -62,15 +62,14 @@ TmpObjectPtr CallMemberFunction::eval() {
 }
 AstNodePtr Parser::parse_function_def() {
   match(TokenKind::FUNCTION);
-  Context::global_symtab()->new_func();
   Token func_name = peek(0);
-  match(IDENTIFIER);
 
   auto func_def = new FunctionDef(func_name);
   auto func_sym = new FunctionSymbol(std::string{func_name.text}, func_def);
-
   Context::global_symtab()->add_symbol(func_name.text, func_sym);
+  Context::global_symtab()->new_func();
 
+  match(IDENTIFIER);
   // parse args
   match(LPAR);
   while (peek(0).kind != RPAR) {
@@ -89,6 +88,7 @@ AstNodePtr Parser::parse_function_def() {
   func_def->frame_size = Context::global_context()->cblk_vcnt();
 
   Context::global_symtab()->end_func();
+  Context::global_symtab()->fill_undefined_func_nodes(func_def);
   return AstNodePtr(func_def);
 }
 

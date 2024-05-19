@@ -147,8 +147,16 @@ AstNodePtr Parser::parse_unit() {
       have_left = true;
 
       auto sym = Context::global_symtab()->find_symbol(tok.text);
-      if (!sym)
-        syntax_error("undefined symbol " + std::string{tok.text}, tok);
+      if (!sym) {
+        if (peek(0).kind == LPAR) // functions defined after call node
+        {
+          auto args = parse_expr_list(LPAR, RPAR);
+          left = std::make_unique<CallNode>(tok, std::move(args));
+          Context::global_context()->global_symtab()->add_undef_func_call(static_cast<CallNode *>(left.get()));
+          break;
+        } else
+          syntax_error("undefined symbol " + std::string{tok.text}, tok);
+      }
       if (sym->get_kind() == SYM_VAR) {
         if (sym->is_global())
           left = make_unique<Variable<true>>(tok, static_cast<VarSymbol *>(sym)->get_stac_pos());
