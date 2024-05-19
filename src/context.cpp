@@ -1,13 +1,15 @@
 #include <context.h>
+#include <lib/io.h>
 #include <parser/symbol.h>
 #include <runtime/intern_function.h>
+#include <runtime/mem.h>
 namespace cake {
 Context::Context() {
   // all tokens have default file.
   source_file_list.push_back("unknown file!");
   sym_tab = new SymbolTable;
 }
-
+void Context::add_init_expr(AstNodePtr stmt) { init_stmts.push_back(std::move(stmt)); }
 Context *Context::global_context() {
   static Context *ret;
 
@@ -15,6 +17,7 @@ Context *Context::global_context() {
     ret = new Context();
     inter_funcs::reg_func(*ret->sym_tab, "print", inter_funcs::print);
     inter_funcs::reg_func(*ret->sym_tab, "length", inter_funcs::length);
+    lib::import_console(ret);
     ret->sym_tab->new_block();
     return ret;
   }
@@ -30,9 +33,13 @@ void Context::clear() {
 size_t Context::cblk_vcnt() const { return sym_tab->cfunc_vcnt(); }
 
 void Context::run() {
-  for (auto &stmt : global_stmts) {
-    stmt->eval_no_value();
+  Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
+  for (auto &it : init_stmts)
+    it->eval_no_value();
+  for (Memory::pc = 0; Memory::pc < global_stmts.size(); Memory::pc++) {
+    global_stmts[Memory::pc]->eval();
   }
+  Memory::gmem.end_func();
 }
 
 void Context::set_global_stmts(std::vector<AstNodePtr> stmts) { global_stmts = std::move(stmts); }

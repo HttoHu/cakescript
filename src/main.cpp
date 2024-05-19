@@ -22,11 +22,8 @@ int main(int argc, char **argv) {
     std::string text((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     cake::Scanner scanner(text);
     cake::Parser parser(std::move(scanner));
-    auto nodes = parser.parse_global();
-    Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
-    for (Memory::pc = 0; Memory::pc < nodes.size(); Memory::pc++) {
-      nodes[Memory::pc]->eval();
-    }
+    Context::global_context()->set_global_stmts(parser.parse_global());
+    Context::global_context()->run();
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
     exit(1);

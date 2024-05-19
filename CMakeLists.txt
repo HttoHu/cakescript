@@ -31,6 +31,7 @@ set (cake_sources
   src/runtime/callable_object.cpp
   src/runtime/intern_function.cpp
 
+  src/lib/io.cpp
 )
 
 include_directories(include

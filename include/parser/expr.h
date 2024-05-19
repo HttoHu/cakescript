@@ -52,7 +52,16 @@ private:
   TokenKind unary_op;
   AstNodePtr expr;
 };
+class InternalObjCreate : public AstNode {
+public:
+  InternalObjCreate(ObjectBase *_obj, int pos) : obj(_obj) {}
+  TmpObjectPtr eval() override { return Memory::gmem.get_global(pos) = obj; }
+  std::string to_string() const override { return "(interal object)"; }
 
+private:
+  ObjectBase *obj;
+  int pos;
+};
 template <typename INDEX_TY> class VistorMember : public AstNode {
 public:
   VistorMember(AstNodePtr _left, INDEX_TY _index) : left(std::move(_left)), index(std::move(_index)) {}
