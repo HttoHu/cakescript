@@ -18,6 +18,7 @@ static std::string parse_text(const std::string &str) {
 
 static std::string parse_blocks(const std::string &str) {
   cake::Scanner scanner(str);
+  cake::Context::global_symtab()->new_func();
   cake::Parser parser(std::move(scanner));
   auto nodes = parser.parse_stmts();
   std::string ret;
@@ -34,7 +35,7 @@ cake::ObjectBase *get_var_val(std::string name) {
   auto var_sym = dynamic_cast<VarSymbol *>(sym);
   if (!var_sym)
     return nullptr;
-  return Memory::gmem.get_global(var_sym->get_stac_pos());
+  return Memory::gmem.get_local(var_sym->get_stac_pos());
 }
 
 #ifndef DISABLE_UNIT
@@ -42,9 +43,9 @@ TEST(parserTest, DeclTest1) {
   EXPECT_EQ(parse_text("let a=2,b=3,c=[1,2,3];"), "(var_decl (a 2 0)(b 3 1)(c (array [1,2,3]) 2))");
   EXPECT_EQ(parse_text("let b,c={a:123,b:[1,2,3]}"), "(var_decl (b 0)(c (object {a:123,b:(array [1,2,3])}) 1))");
   auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};b=b+1;c=c+1;b=c=5+1;");
-  EXPECT_NE(res.find("(ASSIGN glob b(0) (PLUS glob b(0) 1))"), std::string::npos);
-  EXPECT_NE(res.find("(ASSIGN glob c(1) (PLUS glob c(1) 1))"), std::string::npos);
-  EXPECT_NE(res.find("(ASSIGN glob b(0) (ASSIGN glob c(1) (PLUS 5 1)))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN b(0) (PLUS b(0) 1))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN c(1) (PLUS c(1) 1))"), std::string::npos);
+  EXPECT_NE(res.find("(ASSIGN b(0) (ASSIGN c(1) (PLUS 5 1)))"), std::string::npos);
   bool ok = false;
   try {
     auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};\nb=b+1;\nc=c+1;\nb+1=5+1;");
@@ -71,6 +72,7 @@ c=b-3*a;
 
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
+  cake::Context::global_symtab()->new_func();
   auto nodes = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   EXPECT_EQ(nodes[0]->eval().get(), nullptr);

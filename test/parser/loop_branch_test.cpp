@@ -34,6 +34,7 @@ else
 )";
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
+  cake::Context::global_symtab()->new_func();
   auto stmts = parser.parse_stmts();
 
   CFGNode::flatten_blocks(stmts);
@@ -68,6 +69,7 @@ while(i < 10){
 )";
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
+  Context::global_symtab()->new_func();
   auto stmts = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   auto while_node = dynamic_cast<WhileStmt *>(stmts[2].get());
@@ -102,6 +104,7 @@ while (a < b) {
 )";
   cake::Scanner scanner(text);
   cake::Parser parser(std::move(scanner));
+  cake::Context::global_symtab()->new_func();
   auto stmts = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   CFGNode::flatten_blocks(stmts);
