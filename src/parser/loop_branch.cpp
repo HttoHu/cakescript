@@ -4,12 +4,12 @@
 #include <runtime/mem.h>
 namespace cake {
 
-void CFGNode::flatten_blocks(std::vector<AstNodePtr> &stmts) {
+void ControlFlowNode::flatten_blocks(std::vector<AstNodePtr> &stmts) {
   std::vector<AstNodePtr> src;
   std::swap(stmts, src);
 
   for (auto &node : src) {
-    if (auto cfg = dynamic_cast<CFGNode *>(node.get()))
+    if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get()))
       cfg->generate_to(stmts);
     else
       stmts.emplace_back(std::move(node));
@@ -115,7 +115,7 @@ void IfStmt::generate_to(vector<AstNodePtr> &block) {
   for (auto &[cond, blk] : conditional_blocks) {
     pos_vec.push_back(block.size() - 1);
     for (auto &node : blk) {
-      auto cfg = dynamic_cast<CFGNode *>(node.get());
+      auto cfg = dynamic_cast<ControlFlowNode *>(node.get());
       if (cfg)
         cfg->generate_to(block);
       else
@@ -128,7 +128,7 @@ void IfStmt::generate_to(vector<AstNodePtr> &block) {
 
   *else_jmp = block.size() - 1;
   for (auto &node : else_block) {
-    auto cfg = dynamic_cast<CFGNode *>(node.get());
+    auto cfg = dynamic_cast<ControlFlowNode *>(node.get());
     if (cfg)
       cfg->generate_to(block);
     else
@@ -185,7 +185,7 @@ end:
   check_stmt->dest = loop_body_pos;
 
   for (auto &node : loop_body) {
-    if (auto cfg = dynamic_cast<CFGNode *>(node.get()))
+    if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get()))
       cfg->generate_to(block);
     else
       block.emplace_back(std::move(node));

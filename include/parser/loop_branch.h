@@ -4,7 +4,7 @@
 namespace cake {
 using std::pair;
 using std::vector;
-class CFGNode : public AstNode {
+class ControlFlowNode : public AstNode {
 public:
   // flatten AstNode to control flow insts with insertion of jumps and branches.
   virtual void generate_to(vector<AstNodePtr> &block) = 0;
@@ -15,7 +15,7 @@ public:
   TmpObjectPtr eval() override { abort(); }
 };
 
-class IfStmt : public CFGNode {
+class IfStmt : public ControlFlowNode {
 public:
   IfStmt() : conditional_blocks(0), else_block(0) {}
   void generate_to(vector<AstNodePtr> &block) override;
@@ -31,7 +31,7 @@ public:
   std::vector<AstNodePtr> else_block;
 };
 
-class WhileStmt : public CFGNode {
+class WhileStmt : public ControlFlowNode {
 public:
   void generate_to(vector<AstNodePtr> &block) override;
   std::string to_string() const override { return "(unflatten while node)"; }

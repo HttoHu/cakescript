@@ -95,7 +95,7 @@ AstNodePtr Parser::parse_function_def() {
 void FunctionDef::gen_func_object() {
   std::vector<AstNodePtr> insts;
   for (auto &node : block) {
-    if (auto loop_branch = dynamic_cast<CFGNode *>(node.get())) {
+    if (auto loop_branch = dynamic_cast<ControlFlowNode *>(node.get())) {
       loop_branch->generate_to(insts);
     } else
       insts.emplace_back(std::move(node));

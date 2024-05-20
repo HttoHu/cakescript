@@ -27,7 +27,7 @@ std::vector<AstNodePtr> Parser::parse_global() {
   std::vector<AstNodePtr> stmts = parse_stmts();
   std::vector<AstNodePtr> ret;
   for (auto &node : stmts) {
-    if (auto cfg = dynamic_cast<CFGNode *>(node.get()))
+    if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get()))
       cfg->generate_to(ret);
     else if (auto func_def = dynamic_cast<FunctionDef *>(node.get())) {
       func_def->gen_func_object();
