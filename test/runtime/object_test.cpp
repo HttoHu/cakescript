@@ -4,7 +4,7 @@
 #include <parser/parser.h>
 #include <sstream>
 #ifndef DISABLE_UNIT
-TEST(runtimeTest, ObjectTest1) {
+TEST(runtimeTest, ObjectTest2) {
   auto text = utils::read_file("./data/basic/object1.js");
   auto res = utils::run_code(text);
   std::stringstream ss(res);

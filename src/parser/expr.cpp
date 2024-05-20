@@ -27,6 +27,7 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
       {TokenKind::DEC,{3,false}}, // in cakescript, DEC,INC don't have Associativity, you can't write - -a,or -- -- a
       {TokenKind::MUL, {5, true}},
       {TokenKind::DIV, {5, true}},
+      {TokenKind::MOD, {5, true}},
       {TokenKind::PLUS, {6, true}},
       {TokenKind::MINUS, {6, true}}, // binary operation minus
       {TokenKind::LSH,{7,true}},{TokenKind::RSH,{7,true}},
@@ -265,6 +266,7 @@ ObjectBase *BinOp::eval_with_create() {
     BIN_OP_MP(LE, le)
     BIN_OP_MP(LT, lt)
     INT_BIN_OP(LSH, <<)
+    INT_BIN_OP(MOD, %)
     INT_BIN_OP(RSH, >>)
     INT_BIN_OP(BIT_AND, &)
     INT_BIN_OP(BIT_OR, |)

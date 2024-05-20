@@ -146,7 +146,7 @@ public:
     return Memory::gmem.get_local(stac_pos);
   }
   ObjectBase *eval_with_create() override { return eval()->clone(); }
-  ObjectBase **get_left_val() override {
+  ObjectBase **get_left_val() override { 
     if constexpr (IS_GLO)
       return &Memory::gmem.get_global(stac_pos);
     return &Memory::gmem.get_local(stac_pos);

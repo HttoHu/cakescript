@@ -4,10 +4,12 @@
 namespace cake {
 using std::pair;
 using std::vector;
+class Goto;
 class ControlFlowNode : public AstNode {
 public:
-  // flatten AstNode to control flow insts with insertion of jumps and branches.
-  virtual void generate_to(vector<AstNodePtr> &block) = 0;
+  // flatten AstNode to control flow insts with insertion of jumps and branches. return need to processed goto
+  // (continue,break)
+  virtual std::vector<Goto *> generate_to(vector<AstNodePtr> &block) = 0;
 
   // erase if and loop stmts and convert into liner IR
   static void flatten_blocks(std::vector<AstNodePtr> &stmts);
@@ -18,12 +20,11 @@ public:
 class IfStmt : public ControlFlowNode {
 public:
   IfStmt() : conditional_blocks(0), else_block(0) {}
-  void generate_to(vector<AstNodePtr> &block) override;
+  std::vector<Goto *> generate_to(vector<AstNodePtr> &block) override;
   std::string to_string() const override { return "(unflatten if node)"; }
   /*
   if (cond) {blk}      |
   else if (cond) {blk} |->conditional_blocks
-
   else {blk} -> else_block
   using this structure to build IfWithJmpTable, which may be faster then nested if-else in interpretion mode.
   */
@@ -33,7 +34,7 @@ public:
 
 class WhileStmt : public ControlFlowNode {
 public:
-  void generate_to(vector<AstNodePtr> &block) override;
+  std::vector<Goto *> generate_to(vector<AstNodePtr> &block) override;
   std::string to_string() const override { return "(unflatten while node)"; }
   AstNodePtr condition;
   std::vector<AstNodePtr> loop_body;
@@ -58,13 +59,19 @@ public:
 };
 class Goto : public AstNode {
 public:
-  Goto()=default;
-  Goto(int d):dest(d){}
+  Goto() : type(TokenKind::NIL) {}
+  Goto(int d) : type(TokenKind::NIL), dest(d) {}
+  // to support break and continue
+  Goto(TokenKind kind) : type(kind) {}
+
   std::string to_string() const override { return "(goto " + std::to_string(dest) + ")"; }
   TmpObjectPtr eval() override;
   int dest;
+  TokenKind get_kind() const { return type; }
 
 private:
+  friend class WhileStmt;
+  TokenKind type;
 };
 
 }; // namespace cake

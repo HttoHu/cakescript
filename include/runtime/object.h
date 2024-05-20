@@ -106,9 +106,15 @@ public:
   std::string to_string() const override { return str; }
   ObjectBase *add(ObjectBase *rhs) override;
   ObjectBase *clone() const override { return new StringObject(str); }
-
+  ObjectBase *visitVal(int idx) override;
+  ObjectBase *visitVal(const std::string &idx) override;
   std::string to_raw_format() const;
-
+  void sadd(ObjectBase *rhs) override;
+  static std::string &get_str_from_obj(ObjectBase *obj) {
+    if (auto str_obj = dynamic_cast<StringObject *>(obj))
+      return str_obj->str;
+    cake_runtime_error("Object " + obj->to_string() + " convert to string failed!");
+  }
   std::string str;
 
 private:
@@ -142,7 +148,7 @@ public:
     }
   }
   size_t get_array_length() const { return objects->arr.size(); }
-
+  void resize(size_t new_size);
   // caller make sure obj is cloned
   void push_obj(ObjectBase *obj) { objects->arr.push_back(obj); }
   void pop() {

@@ -32,5 +32,10 @@ ObjectBase *print(std::vector<ObjectBase *> args);
 ObjectBase *length(std::vector<ObjectBase *> args);
 ObjectBase* _array_push(std::vector<ObjectBase *> args);
 ObjectBase* _array_pop(std::vector<ObjectBase *> args);
+ObjectBase* _array_resize(std::vector<ObjectBase *> args);
+
+ObjectBase* _string_set(std::vector<ObjectBase *> args);
+ObjectBase* _string_trim(std::vector<ObjectBase *> args);
+ObjectBase* _string_index_of(std::vector<ObjectBase *> args);
 } // namespace inter_funcs
 } // namespace cake

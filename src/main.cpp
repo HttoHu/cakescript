@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
       std::cerr << "open file " << argv[1] << " failed!";
     }
     std::string text((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    cake::Scanner scanner(text);
+    cake::Scanner scanner(text,argv[1]);
     cake::Parser parser(std::move(scanner));
     Context::global_context()->set_global_stmts(parser.parse_global());
     if (dump_ast)

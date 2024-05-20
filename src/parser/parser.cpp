@@ -62,6 +62,12 @@ AstNodePtr Parser::parse_stmt() {
   case LET:
     ret = parse_decl();
     break;
+  case BREAK:
+    lexer.next_token();
+    return std::make_unique<Goto>(TokenKind::BREAK);
+  case CONTINUE:
+    lexer.next_token();
+    return std::make_unique<Goto>(TokenKind::CONTINUE);
   case INC:
   case DEC:
   case MINUS:

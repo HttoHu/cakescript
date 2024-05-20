@@ -81,7 +81,7 @@ TmpObjectPtr IfWithJmpTable::eval() {
   return nullptr;
 }
 
-void IfStmt::generate_to(vector<AstNodePtr> &block) {
+std::vector<Goto *> IfStmt::generate_to(vector<AstNodePtr> &block) {
   /*
     block ...
     ifwith jmp table
@@ -99,7 +99,7 @@ void IfStmt::generate_to(vector<AstNodePtr> &block) {
   */
   AstNode *conditional_jmp;
   int *else_jmp;
-
+  vector<Goto *> ret;
   if (conditional_blocks.size() == 1) {
     conditional_jmp = new IfTrueJmp();
     else_jmp = &static_cast<IfTrueJmp *>(conditional_jmp)->false_dest;
@@ -115,10 +115,14 @@ void IfStmt::generate_to(vector<AstNodePtr> &block) {
   for (auto &[cond, blk] : conditional_blocks) {
     pos_vec.push_back(block.size() - 1);
     for (auto &node : blk) {
-      auto cfg = dynamic_cast<ControlFlowNode *>(node.get());
-      if (cfg)
-        cfg->generate_to(block);
-      else
+      if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get())) {
+        auto gotos = cfg->generate_to(block);
+        ret.insert(ret.end(), gotos.begin(), gotos.end());
+      } else if (auto goto_node = dynamic_cast<Goto *>(node.get())) {
+        if (goto_node->get_kind() == TokenKind::CONTINUE || goto_node->get_kind() == TokenKind::BREAK)
+          ret.push_back(goto_node);
+        block.push_back(std::move(node));
+      } else
         block.push_back(std::move(node));
     }
     auto go_end = std::make_unique<Goto>();
@@ -147,6 +151,7 @@ void IfStmt::generate_to(vector<AstNodePtr> &block) {
   }
   conditional_blocks.clear();
   else_block.clear();
+  return ret;
 }
 std::string IfTrueJmp::to_string() const {
   return fmt::format("(if {} goto {} else {})", cond->to_string(), dest, false_dest);
@@ -161,7 +166,7 @@ TmpObjectPtr IfTrueJmp::eval() {
   return nullptr;
 }
 
-void WhileStmt::generate_to(vector<AstNodePtr> &block) {
+std::vector<Goto *> WhileStmt::generate_to(vector<AstNodePtr> &block) {
   /*
   while(cond)
   {
@@ -184,17 +189,37 @@ end:
   int loop_body_pos = block.size() - 1;
   check_stmt->dest = loop_body_pos;
 
+  std::vector<Goto *> go_ends;
   for (auto &node : loop_body) {
-    if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get()))
-      cfg->generate_to(block);
-    else
+    if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get())) {
+      auto gotos = cfg->generate_to(block);
+      for (auto cur_goto : gotos) {
+        if (cur_goto->get_kind() == TokenKind::CONTINUE)
+          cur_goto->type = TokenKind::NIL, cur_goto->dest = cond_pos;
+        else if (cur_goto->get_kind() == TokenKind::BREAK)
+          cur_goto->type = TokenKind::NIL, go_ends.push_back(cur_goto);
+        else
+          throw std::runtime_error("internal error :WhileStmt::generate_to()");
+      }
+    } else if (auto cur_goto = dynamic_cast<Goto *>(node.get())) {
+      if (cur_goto->get_kind() == TokenKind::CONTINUE)
+        cur_goto->type = TokenKind::NIL, cur_goto->dest = cond_pos;
+      else if (cur_goto->get_kind() == TokenKind::BREAK)
+        cur_goto->type = TokenKind::NIL, go_ends.push_back(cur_goto);
+      else
+        block.emplace_back(std::move(node));
+    } else
       block.emplace_back(std::move(node));
   }
   block.push_back(std::make_unique<Goto>(cond_pos));
   int end_pos = block.size() - 1;
+  // breaks
+  for (auto goto_stmt : go_ends)
+    goto_stmt->dest = end_pos;
   check_stmt->false_dest = end_pos;
 
   // clear
   loop_body.clear();
+  return {};
 }
 } // namespace cake

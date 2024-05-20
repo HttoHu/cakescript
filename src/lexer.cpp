@@ -12,6 +12,7 @@ TokenKind Token::get_word_kind(string_view word) {
   const std::unordered_map<string_view, TokenKind> tab = {
       {"if", TokenKind::IF},        {"while", TokenKind::WHILE}, {"for", TokenKind::FOR},
       {"let", TokenKind::LET},      {"else", TokenKind::ELSE},   {"function", TokenKind::FUNCTION},
+      {"continue",TokenKind::CONTINUE},{"break",TokenKind::BREAK},
       {"return", TokenKind::RETURN}};
   auto it = tab.find(word);
   if (it != tab.end())

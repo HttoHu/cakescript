@@ -19,7 +19,6 @@ public:
   [[noreturn]] void syntax_error(const std::string &error_info);
   [[noreturn]] void syntax_error(const std::string &error_info, Token tok);
   AstNodePtr parse_function_def();
-  AstNodePtr parse_function_call();
 private:
   Scanner lexer;
   AstNodePtr parse_unit();
