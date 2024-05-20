@@ -1,6 +1,9 @@
 #include <fmt/format.h>
 #include <parser/loop_branch.h>
 #include <parser/parser.h>
+#include <parser/symbol.h>
+
+#include <context.h>
 #include <runtime/mem.h>
 namespace cake {
 
@@ -46,12 +49,31 @@ AstNodePtr Parser::parse_if() {
 }
 
 AstNodePtr Parser::parse_while() {
-  auto ret = std::make_unique<WhileStmt>();
+  auto ret = std::make_unique<LoopStmt>();
   match(WHILE);
   match(LPAR);
   ret->condition = parse_expr();
   match(RPAR);
   ret->loop_body = parse_block();
+  return ret;
+}
+AstNodePtr Parser::parse_for() {
+  auto ret = std::make_unique<LoopStmt>();
+  match(FOR);
+  match(LPAR);
+  Context::global_symtab()->new_block();
+  if (peek(0).kind == LET)
+    ret->init = parse_decl();
+  else if (peek(0).kind != SEMI)
+    ret->init = parse_expr();
+
+  match(SEMI);
+  ret->condition = parse_expr();
+  match(SEMI);
+  ret->step = parse_expr();
+  match(RPAR);
+  ret->loop_body = parse_block();
+  Context::global_symtab()->end_block();
   return ret;
 }
 
@@ -166,7 +188,7 @@ TmpObjectPtr IfTrueJmp::eval() {
   return nullptr;
 }
 
-std::vector<Goto *> WhileStmt::generate_to(vector<AstNodePtr> &block) {
+std::vector<Goto *> LoopStmt::generate_to(vector<AstNodePtr> &block) {
   /*
   while(cond)
   {
@@ -179,9 +201,24 @@ loop_body_pos:
   stmts
   goto cond_pos
 end:
+
+  for(init;cond;step)
+    stmts
+=>
+init_expr
+cond_pos:
+if cond loop_body_pos, end
+loop_body_pos:
+  stmts
+  step: => continue jump here
+  goto cond_pos
+end:
 */
+  if (init)
+    block.push_back(std::move(init));
 
   int cond_pos = block.size() - 1;
+
   auto check_stmt = new IfTrueJmp;
   check_stmt->cond = std::move(condition);
 
@@ -189,33 +226,44 @@ end:
   int loop_body_pos = block.size() - 1;
   check_stmt->dest = loop_body_pos;
 
-  std::vector<Goto *> go_ends;
+  std::vector<Goto *> continue_nodes;
+  std::vector<Goto *> break_nodes;
   for (auto &node : loop_body) {
     if (auto cfg = dynamic_cast<ControlFlowNode *>(node.get())) {
       auto gotos = cfg->generate_to(block);
       for (auto cur_goto : gotos) {
         if (cur_goto->get_kind() == TokenKind::CONTINUE)
-          cur_goto->type = TokenKind::NIL, cur_goto->dest = cond_pos;
+          cur_goto->type = TokenKind::NIL, continue_nodes.push_back(cur_goto);
         else if (cur_goto->get_kind() == TokenKind::BREAK)
-          cur_goto->type = TokenKind::NIL, go_ends.push_back(cur_goto);
+          cur_goto->type = TokenKind::NIL, break_nodes.push_back(cur_goto);
         else
           throw std::runtime_error("internal error :WhileStmt::generate_to()");
       }
     } else if (auto cur_goto = dynamic_cast<Goto *>(node.get())) {
       if (cur_goto->get_kind() == TokenKind::CONTINUE)
-        cur_goto->type = TokenKind::NIL, cur_goto->dest = cond_pos;
+        cur_goto->type = TokenKind::NIL, continue_nodes.push_back(cur_goto);
       else if (cur_goto->get_kind() == TokenKind::BREAK)
-        cur_goto->type = TokenKind::NIL, go_ends.push_back(cur_goto);
+        cur_goto->type = TokenKind::NIL, break_nodes.push_back(cur_goto);
       else
         block.emplace_back(std::move(node));
     } else
       block.emplace_back(std::move(node));
   }
+  int step_pos = -1;
+  if (step) {
+    step_pos = (int)block.size() - 1;
+    block.push_back(std::move(step));
+  }
   block.push_back(std::make_unique<Goto>(cond_pos));
   int end_pos = block.size() - 1;
   // breaks
-  for (auto goto_stmt : go_ends)
-    goto_stmt->dest = end_pos;
+  for (auto continue_node : continue_nodes)
+    if (step_pos >= 0)
+      continue_node->dest = step_pos;
+    else
+      continue_node->dest = cond_pos;
+  for (auto break_node : break_nodes)
+    break_node->dest = end_pos;
   check_stmt->false_dest = end_pos;
 
   // clear

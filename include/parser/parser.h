@@ -19,6 +19,7 @@ public:
   [[noreturn]] void syntax_error(const std::string &error_info);
   [[noreturn]] void syntax_error(const std::string &error_info, Token tok);
   AstNodePtr parse_function_def();
+
 private:
   Scanner lexer;
   AstNodePtr parse_unit();
@@ -30,6 +31,7 @@ private:
   AstNodePtr parse_decl();
   AstNodePtr parse_if();
   AstNodePtr parse_while();
+  AstNodePtr parse_for();
   // comma seperated list
   std::vector<AstNodePtr> parse_expr_list(TokenKind begin, TokenKind end);
 };

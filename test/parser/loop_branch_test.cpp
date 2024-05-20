@@ -72,7 +72,7 @@ while(i < 10){
   Context::global_symtab()->new_func();
   auto stmts = parser.parse_stmts();
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
-  auto while_node = dynamic_cast<WhileStmt *>(stmts[2].get());
+  auto while_node = dynamic_cast<LoopStmt *>(stmts[2].get());
   EXPECT_EQ(while_node->condition->to_string(), "(LT i(1) 10)");
   EXPECT_EQ(while_node->loop_body.size(), 2);
   EXPECT_EQ(while_node->loop_body[0]->to_string(), "(ASSIGN sum(0) (PLUS i(1) sum(0)))");

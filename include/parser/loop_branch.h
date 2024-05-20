@@ -32,10 +32,13 @@ public:
   std::vector<AstNodePtr> else_block;
 };
 
-class WhileStmt : public ControlFlowNode {
+// mixed for and while
+class LoopStmt : public ControlFlowNode {
 public:
   std::vector<Goto *> generate_to(vector<AstNodePtr> &block) override;
   std::string to_string() const override { return "(unflatten while node)"; }
+  AstNodePtr init = nullptr; // can be empty
+  AstNodePtr step = nullptr;
   AstNodePtr condition;
   std::vector<AstNodePtr> loop_body;
 };
@@ -70,7 +73,7 @@ public:
   TokenKind get_kind() const { return type; }
 
 private:
-  friend class WhileStmt;
+  friend class LoopStmt;
   TokenKind type;
 };
 

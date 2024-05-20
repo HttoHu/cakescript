@@ -78,6 +78,8 @@ AstNodePtr Parser::parse_stmt() {
     break;
   case IF:
     return parse_if();
+  case FOR:
+    return parse_for();
   case WHILE:
     return parse_while();
   case RETURN: {
