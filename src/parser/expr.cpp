@@ -214,8 +214,19 @@ AstNodePtr Parser::parse_unit() {
       match(TokenKind::RPAR);
       return ret;
     }
+    case TokenKind::DEC:
+    case TokenKind::INC: {
+      if (!left)
+        syntax_error("unexpected INC!");
+      if (dynamic_cast<Literal *>(left.get()))
+        syntax_error("literal can not dec or inc!");
+      lexer.next_token();
+      if (tok.kind == INC)
+        return std::make_unique<PostIncDec<true>>(std::move(left));
+      return std::make_unique<PostIncDec<false>>(std::move(left));
+    }
     default:
-      if(!left)
+      if (!left)
         syntax_error("parse unit failed!");
       return left;
     }
@@ -331,7 +342,7 @@ TmpObjectPtr ObjectNode::eval() {
   std::vector<std::pair<std::string, ObjectBase *>> tab;
   for (auto &[k, v] : object)
     tab.push_back({k, v->eval_with_create()});
-  return TmpObjectPtr(new StructObject(std::move(tab)),true);
+  return TmpObjectPtr(new StructObject(std::move(tab)), true);
 }
 
 TmpObjectPtr ArrayNode::eval() {

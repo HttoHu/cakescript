@@ -3,6 +3,11 @@ project(cake)
 
 include(FetchContent)
 
+set(LLVM_DIR "" CACHE PATH "/usr/lib/llvm-14/lib/cmake/llvm")
+find_package(LLVM REQUIRED 14)
+llvm_map_components_to_libnames(llvm_all ${LLVM_TARGETS_TO_BUILD} Passes ExecutionEngine MCJIT)
+message(STATUS "Architecture: ${TARGET_ARCH}" )
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED)
@@ -46,7 +51,8 @@ target_link_libraries(
 )
 target_include_directories(libcake
   PUBLIC 
-  "include"
+  include
+  ${LLVM_INCLUDE_DIRS}
 )
 # build cake
 add_executable(
@@ -55,8 +61,9 @@ add_executable(
 )
 
 target_link_libraries(${PROJECT_NAME} 
-PRIVATE 
+PUBLIC 
   libcake
+  ${llvm_all}
 )
 
 add_subdirectory(test)

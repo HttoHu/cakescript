@@ -39,6 +39,7 @@ private:
   TokenKind op;
   AstNodePtr left, right;
 };
+
 class UnaryOp : public AstNode {
 public:
   UnaryOp(TokenKind _op, AstNodePtr _expr) : unary_op(_op), expr(std::move(_expr)) {}
@@ -146,7 +147,7 @@ public:
     return Memory::gmem.get_local(stac_pos);
   }
   ObjectBase *eval_with_create() override { return eval()->clone(); }
-  ObjectBase **get_left_val() override { 
+  ObjectBase **get_left_val() override {
     if constexpr (IS_GLO)
       return &Memory::gmem.get_global(stac_pos);
     return &Memory::gmem.get_local(stac_pos);
@@ -156,7 +157,26 @@ private:
   Token id;
   size_t stac_pos;
 };
+template <bool IS_INC> class PostIncDec : public AstNode {
+public:
+  PostIncDec(AstNodePtr _expr) : expr(std::move(_expr)) {}
+  std::string to_string() const override {
+    if constexpr (IS_INC)
+      return "(inc)";
+    return "(dec)";
+  }
+  TmpObjectPtr eval() override {
+    auto ret = expr->eval_with_create();
+    if constexpr (IS_INC)
+      expr->eval()->inc();
+    else
+      expr->eval()->dec();
+    return ret;
+  }
 
+private:
+  AstNodePtr expr;
+};
 class ObjectNode : public AstNode {
 public:
   ObjectNode(map<std::string, AstNodePtr> _object) : object(std::move(_object)) {}

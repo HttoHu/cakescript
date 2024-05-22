@@ -70,7 +70,8 @@ AstNodePtr Parser::parse_for() {
   match(SEMI);
   ret->condition = parse_expr();
   match(SEMI);
-  ret->step = parse_expr();
+  if (peek(0).kind != RPAR)
+    ret->step = parse_expr();
   match(RPAR);
   ret->loop_body = parse_block();
   Context::global_symtab()->end_block();
