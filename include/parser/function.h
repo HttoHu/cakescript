@@ -34,6 +34,7 @@ public:
       : func_name(_func_name), executor(callable), args(std::move(_args)) {}
 
   TmpObjectPtr eval() override;
+  ObjectBase* eval_with_create()override;
   std::string to_string() const override;
   std::string_view get_func_name() { return func_name.text; }
 

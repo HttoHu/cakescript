@@ -4,6 +4,7 @@
 #include <parser/loop_branch.h>
 #include <parser/parser.h>
 #include <parser/symbol.h>
+#include <filesystem>
 
 namespace cake {
 Token Parser::match(TokenKind kind) {
@@ -101,6 +102,8 @@ void Parser::syntax_error(const std::string &error_info) {
 }
 
 void Parser::syntax_error(const std::string &error_info, Token tok) {
-  throw std::runtime_error(fmt::format("syntax error: {}:{} ", tok.get_file_pos(), error_info));
+  using namespace std::filesystem;
+  std::string abs_path = absolute(path(tok.get_file_pos()));
+  throw std::runtime_error(fmt::format("syntax error: {}: {} ",abs_path , error_info));
 }
 } // namespace cake

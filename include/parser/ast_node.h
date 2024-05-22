@@ -22,9 +22,11 @@ public:
 
 private:
 };
+// to present the object of return;
 class EmptyNode : public AstNode {
 public:
-  TmpObjectPtr eval() override { return nullptr; }
+  TmpObjectPtr eval() override { return TmpObjectPtr(eval_with_create(),true); }
+  ObjectBase* eval_with_create()override{return new NullObject;}
   std::string to_string() const override { return "(empty)"; }
 
 private:

@@ -239,6 +239,7 @@ AstNodePtr Parser::parse_unit() {
 AstNodePtr Parser::parse_unary() {
   auto op_kind = peek(0).kind;
   switch (op_kind) {
+  case NOT:
   case INC:
   case DEC:
   case MINUS:
@@ -364,6 +365,11 @@ ObjectBase *UnaryOp::eval_with_create() {
   case MINUS: {
     auto val = static_cast<IntegerObject *>(operand.get())->get_int();
     return new IntegerObject(-val);
+  }
+  case NOT:
+  {
+    auto val = static_cast<IntegerObject *>(operand.get())->get_int();
+    return new IntegerObject(!val);
   }
   default:
     cake_runtime_error("unknown unary op");

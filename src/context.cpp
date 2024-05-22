@@ -1,5 +1,6 @@
 #include <context.h>
 #include <lib/io.h>
+#include <lib/math.h>
 #include <parser/symbol.h>
 #include <runtime/intern_function.h>
 #include <runtime/mem.h>
@@ -17,6 +18,7 @@ Context *Context::global_context() {
     inter_funcs::reg_func(*ret->sym_tab, "print", inter_funcs::print);
     inter_funcs::reg_func(*ret->sym_tab, "length", inter_funcs::length);
     lib::import_console(ret);
+    lib::import_Math(ret);
     ret->sym_tab->new_block();
     return ret;
   }
@@ -37,6 +39,7 @@ void Context::run() {
   Memory::gmem.new_func(cake::Context::global_context()->cblk_vcnt());
   for (auto &it : init_stmts)
     it->eval_no_value();
+
   for (Memory::pc = 0; Memory::pc < global_stmts.size(); Memory::pc++) {
     global_stmts[Memory::pc]->eval();
   }

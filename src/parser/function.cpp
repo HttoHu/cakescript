@@ -22,6 +22,9 @@ std::vector<AstNodePtr> Parser::parse_expr_list(TokenKind begin, TokenKind end) 
   return ret;
 }
 TmpObjectPtr CallNode::eval() {
+  return TmpObjectPtr(eval_with_create(),true);
+}
+ObjectBase *CallNode::eval_with_create() {
   std::vector<TmpObjectPtr> tmps;
   std::vector<ObjectBase *> args_obj;
   args_obj.reserve(args.size());
@@ -32,7 +35,7 @@ TmpObjectPtr CallNode::eval() {
     args_obj.emplace_back(tmps.back().get());
   }
   auto ret = executor->apply(std::move(args_obj));
-  return TmpObjectPtr(ret, true);
+  return ret;
 }
 std::string CallNode::to_string() const {
   std::string ret = "(call " + std::string{func_name.text};
