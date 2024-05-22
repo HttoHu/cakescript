@@ -240,11 +240,23 @@ AstNodePtr Parser::parse_unary() {
   auto op_kind = peek(0).kind;
   switch (op_kind) {
   case NOT:
+    lexer.next_token();
+    return std::make_unique<UnaryOp<NOT>>(op_kind, parse_unit());
   case INC:
-  case DEC:
+  case DEC: {
+    lexer.next_token();
+    auto expr = parse_unit();
+    if (!expr->left_value())
+      syntax_error("the expr of inc/dec must be left value!");
+    if (op_kind == DEC)
+      return std::make_unique<UnaryOp<DEC>>(op_kind, std::move(expr));
+    else
+      return std::make_unique<UnaryOp<INC>>(op_kind, std::move(expr));
+  }
   case MINUS:
     lexer.next_token();
-    return std::make_unique<UnaryOp>(op_kind, parse_unit());
+    return std::make_unique<UnaryOp<MINUS>>(op_kind, parse_unit());
+
   default:
     // not an unary node.
     return parse_unit();
@@ -353,26 +365,4 @@ TmpObjectPtr ArrayNode::eval() {
   return TmpObjectPtr(new ArrayObject(std::move(arr)), true);
 }
 
-ObjectBase *UnaryOp::eval_with_create() {
-  auto operand = expr->eval();
-  switch (unary_op) {
-  case INC:
-    operand->inc();
-    return operand->clone();
-  case DEC:
-    operand->dec();
-    return operand->clone();
-  case MINUS: {
-    auto val = static_cast<IntegerObject *>(operand.get())->get_int();
-    return new IntegerObject(-val);
-  }
-  case NOT:
-  {
-    auto val = static_cast<IntegerObject *>(operand.get())->get_int();
-    return new IntegerObject(!val);
-  }
-  default:
-    cake_runtime_error("unknown unary op");
-  }
-}
 } // namespace cake

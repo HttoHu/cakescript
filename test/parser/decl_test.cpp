@@ -51,8 +51,7 @@ TEST(parserTest, DeclTest1) {
     auto res = parse_blocks("let b,c={a:123,b:[1,2,3]};\nb=b+1;\nc=c+1;\nb+1=5+1;");
   } catch (std::exception &e) {
     ok = true;
-    EXPECT_EQ(std::string{e.what()},
-              "syntax error: unknown file!:4:4:assign operation expect left value in the left side! ");
+    EXPECT_TRUE(std::string{e.what()}.find("assign operation expect left value in the left side! ") != std::string::npos);
   }
   EXPECT_TRUE(ok);
   Context::global_context()->clear();

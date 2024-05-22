@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(cake)
 
 include(FetchContent)
-set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -flto")
+# set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -flto")
 
 set(LLVM_DIR "" CACHE PATH "/usr/lib/llvm-14/lib/cmake/llvm")
 find_package(LLVM REQUIRED 14)

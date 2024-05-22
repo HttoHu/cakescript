@@ -40,22 +40,49 @@ private:
   AstNodePtr left, right;
 };
 
-class UnaryOp : public AstNode {
+template <TokenKind UOP> class UnaryOp : public AstNode {
 public:
   UnaryOp(TokenKind _op, AstNodePtr _expr) : unary_op(_op), expr(std::move(_expr)) {}
   std::string to_string() const override {
     return fmt::format("({} {})", Token::token_kind_str(unary_op), expr->to_string());
   }
-  TmpObjectPtr eval() override { return TmpObjectPtr(eval_with_create(), true); }
-  ObjectBase *eval_with_create() override;
+  TmpObjectPtr eval() override {
+    auto operand = expr->eval();
+    if constexpr (UOP == TokenKind::NOT || UOP == TokenKind::MINUS) {
+      return TmpObjectPtr(eval_with_create(), true);
+    } else if constexpr (UOP == TokenKind::INC) {
+      operand->inc();
+      return operand;
+    } else if constexpr (UOP == TokenKind::DEC) {
+      operand->dec();
+      return operand;
+    } else
+      cake_runtime_error("unsupported unary op ");
+  }
+  ObjectBase *eval_with_create() override {
+    if constexpr (UOP == TokenKind::INC || UOP == TokenKind::DEC)
+      return eval()->clone();
+    else if constexpr (UOP == TokenKind::MINUS) {
+      auto operand = expr->eval();
+      auto val = static_cast<IntegerObject *>(operand.get())->get_int();
+      return new IntegerObject(-val);
+    }
+    else if constexpr (UOP == TokenKind::NOT) {
+      auto operand = expr->eval();
+      auto val = static_cast<IntegerObject *>(operand.get())->get_int();
+      return new IntegerObject(!val);
+    }
+    else 
+      cake_runtime_error("unknown unary op");
+  }
 
 private:
-  TokenKind unary_op;
+  TokenKind unary_op; // record position
   AstNodePtr expr;
 };
 class InternalObjCreate : public AstNode {
 public:
-  InternalObjCreate(ObjectBase *_obj, int _pos) : obj(_obj),pos(_pos) {}
+  InternalObjCreate(ObjectBase *_obj, int _pos) : obj(_obj), pos(_pos) {}
   TmpObjectPtr eval() override { return Memory::gmem.get_global(pos) = obj->clone(); }
   std::string to_string() const override { return "(interal object)"; }
 
