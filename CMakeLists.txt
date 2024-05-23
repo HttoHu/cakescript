@@ -4,15 +4,15 @@ project(cake)
 include(FetchContent)
 # set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -flto")
 
-set(LLVM_DIR "" CACHE PATH "/usr/lib/llvm-14/lib/cmake/llvm")
-find_package(LLVM REQUIRED 14)
-llvm_map_components_to_libnames(llvm_all ${LLVM_TARGETS_TO_BUILD} Passes ExecutionEngine MCJIT)
-message(STATUS "Architecture: ${TARGET_ARCH}" )
+# set(LLVM_DIR "" CACHE PATH "/usr/lib/llvm-14/lib/cmake/llvm")
+# find_package(LLVM REQUIRED 14)
+# llvm_map_components_to_libnames(llvm_all ${LLVM_TARGETS_TO_BUILD} Passes ExecutionEngine MCJIT)
+# message(STATUS "Architecture: ${TARGET_ARCH}" )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-add_compile_options("-g")
+
 # fetch fmt library
 FetchContent_Declare(
   fmt
