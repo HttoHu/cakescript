@@ -22,7 +22,7 @@ add_executable(unit
 )
 target_link_libraries(unit 
   GTest::gtest_main
-  libcake
+  CakeCore
 )
 include(GoogleTest)
 gtest_discover_tests(unit)

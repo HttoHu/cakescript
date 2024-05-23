@@ -8,37 +8,6 @@
 
 namespace cake {
 using std::map;
-class BinOp : public AstNode {
-public:
-  BinOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
-      : left(std::move(_left)), right(std::move(_right)), op(_op) {}
-  bool left_value() const override { return op == TokenKind::ASSIGN; }
-  TmpObjectPtr eval() override;
-  ObjectBase *eval_with_create() override;
-  std::string to_string() const override {
-    return fmt::format("({} {} {})", Token::token_kind_str(op), left->to_string(), right->to_string());
-  }
-  ~BinOp() {}
-
-private:
-  AstNodePtr left, right;
-  TokenKind op;
-};
-
-class AssignOp : public AstNode {
-public:
-  AssignOp(AstNodePtr _left, TokenKind _op, AstNodePtr _right)
-      : left(std::move(_left)), op(_op), right(std::move(_right)) {}
-  bool left_value() const override { return true; }
-  TmpObjectPtr eval() override;
-  ObjectBase *eval_with_create() override { return eval()->clone(); }
-  void eval_no_value() override { eval(); }
-  std::string to_string() const override;
-
-private:
-  TokenKind op;
-  AstNodePtr left, right;
-};
 
 template <TokenKind UOP> class UnaryOp : public AstNode {
 public:
@@ -150,9 +119,8 @@ public:
   ObjectBase *eval_with_create() override { return result_tmp->clone(); }
   std::string to_string() const override { return result_tmp->to_string(); }
   ~Literal() {
-    // BUG: unit test segmentation fault
-    // if (result_tmp)
-    //   delete result_tmp;
+    if (result_tmp)
+      delete result_tmp;
   }
 
 private:

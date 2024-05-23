@@ -31,6 +31,7 @@ set (cake_sources
   src/parser/loop_branch.cpp
   src/parser/function.cpp
   src/parser/symbol.cpp
+  src/parser/bin_op.cpp
   
   src/runtime/object.cpp
   src/runtime/mem.cpp
@@ -47,12 +48,12 @@ include_directories(include
 )
 
 
-add_library(libcake STATIC ${cake_sources})
+add_library(CakeCore STATIC ${cake_sources})
 target_link_libraries(
-  libcake 
+  CakeCore 
   fmt::fmt 
 )
-target_include_directories(libcake
+target_include_directories(CakeCore
   PUBLIC 
   include
   ${LLVM_INCLUDE_DIRS}
@@ -65,7 +66,7 @@ add_executable(
 
 target_link_libraries(${PROJECT_NAME} 
 PUBLIC 
-  libcake
+  CakeCore
   ${llvm_all}
 )
 

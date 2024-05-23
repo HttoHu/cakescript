@@ -1,7 +1,6 @@
 #include <iostream>
 #include <runtime/mem.h>
 #include <runtime/object.h>
-
 namespace cake {
 Memory::Memory() : block_size_vec(1) {}
 Memory Memory::gmem;
@@ -32,7 +31,6 @@ void Memory::print_status() {
   }
 }
 
-void Memory::set_ret(ObjectBase *ret) { get_local(block_size_vec.back() - 1) = ret; }
 void Memory::end_func() {
   int sz = block_size_vec.back();
   block_size_vec.pop_back();

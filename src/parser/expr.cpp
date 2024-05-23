@@ -9,6 +9,7 @@
 
 namespace cake {
 using std::make_unique;
+AstNodePtr create_bin_op(AstNodePtr l, TokenKind op, AstNodePtr r);
 
 AstNodePtr Parser::parse_expr_imp(int ppred) {
   if (ppred == 1)
@@ -69,20 +70,16 @@ AstNodePtr Parser::parse_expr_imp(int ppred) {
   if (get_pred(ops.back().kind).second) {
     AstNodePtr root = std::move(nodes.front());
     for (int i = 1; i < nodes.size(); i++)
-      root = make_unique<BinOp>(std::move(root), ops[i - 1].kind, std::move(nodes[i]));
+      root = create_bin_op(std::move(root), ops[i - 1].kind, std::move(nodes[i]));
     return root;
   } else {
     // right to left
     AstNodePtr root = std::move(nodes.back());
     // the size of ops = nodes.size()-1
     for (int i = ops.size() - 1; i >= 0; i--) {
-      if (ppred == 16) {
-        if (!nodes[i]->left_value())
-          syntax_error("assign operation expect left value in the left side!", ops[i]);
-        else
-          root = make_unique<AssignOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
-      } else
-        root = make_unique<BinOp>(std::move(nodes[i]), ops[i].kind, std::move(root));
+      if (ppred == 16 && !nodes[i]->left_value())
+        syntax_error("assign operation expect left value in the left side!", ops[i]);
+      root = create_bin_op(std::move(nodes[i]), ops[i].kind, std::move(root));
     }
     return root;
   }
@@ -263,45 +260,6 @@ AstNodePtr Parser::parse_unary() {
   }
 }
 
-ObjectBase *BinOp::eval_with_create() {
-  auto lval = left->eval();
-  auto rval = right->eval();
-#define BIN_OP_MP(TAG, OP)                                                                                             \
-  case TokenKind::TAG: {                                                                                               \
-    return lval->OP(rval.get());                                                                                       \
-  }
-#define INT_BIN_OP(TAG, OP)                                                                                            \
-  case TokenKind::TAG: {                                                                                               \
-    auto l = dynamic_cast<IntegerObject *>(lval.get()), r = dynamic_cast<IntegerObject *>(rval.get());                 \
-    if (!l || !r)                                                                                                      \
-      cake_runtime_error("bitwise op: expect integer operand!");                                                       \
-    return new IntegerObject(l->get_int() OP r->get_int());                                                            \
-  }
-
-  switch (op) {
-    BIN_OP_MP(PLUS, add)
-    BIN_OP_MP(MUL, mul)
-    BIN_OP_MP(MINUS, sub)
-    BIN_OP_MP(DIV, div)
-    BIN_OP_MP(EQ, eq)
-    BIN_OP_MP(NE, ne)
-    BIN_OP_MP(GE, ge)
-    BIN_OP_MP(GT, gt)
-    BIN_OP_MP(LE, le)
-    BIN_OP_MP(LT, lt)
-    INT_BIN_OP(LSH, <<)
-    INT_BIN_OP(MOD, %)
-    INT_BIN_OP(RSH, >>)
-    INT_BIN_OP(BIT_AND, &)
-    INT_BIN_OP(BIT_OR, |)
-    INT_BIN_OP(BIT_XOR, ^)
-    INT_BIN_OP(AND, &&)
-    INT_BIN_OP(OR, ||)
-  default:
-    cake_runtime_error("bianry op: unsupported operation!");
-  }
-}
-TmpObjectPtr BinOp::eval() { return TmpObjectPtr(eval_with_create(), true); }
 Literal::Literal(Token lit) {
   if (lit.kind == TokenKind::INTEGER) {
     result_tmp = new IntegerObject((int64_t)std::stoi(std::string{lit.text}));
@@ -312,43 +270,6 @@ Literal::Literal(Token lit) {
     result_tmp = new StringObject(*str);
   } else
     cake_runtime_error("unknown literal");
-}
-
-TmpObjectPtr AssignOp::eval() {
-  auto left_val = left->get_left_val();
-  switch (op) {
-  // the object may be reassign an differnt type object, so we need delete old object
-  case ASSIGN: {
-    TmpObjectPtr t(*left_val, true);
-    // debug for a long time: right may use left_val, we can't delete left_val before right->eval_with_create()
-    *left_val = right->eval_with_create();
-    return *left_val;
-  }
-  case SADD: {
-    (*left_val)->sadd(right->eval().get());
-    break;
-  case SSUB:
-    (*left_val)->ssub(right->eval().get());
-    break;
-  case SMUL:
-    (*left_val)->smul(right->eval().get());
-    break;
-  case SDIV:
-    (*left_val)->sdiv(right->eval().get());
-    break;
-  }
-  default:
-    unreachable();
-  }
-  return *left_val;
-}
-std::string AssignOp::to_string() const {
-  switch (op) {
-  case ASSIGN:
-    return "(ASSIGN " + left->to_string() + " " + right->to_string() + ")";
-  default:
-    return "(unknown assign op)";
-  }
 }
 
 TmpObjectPtr ObjectNode::eval() {
