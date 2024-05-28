@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(cake)
 
 include(FetchContent)
-# set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -flto")
-
+set(CMAKE_CXX_FLAGS_RELEASE  "-Ofast")
 # set(LLVM_DIR "" CACHE PATH "/usr/lib/llvm-14/lib/cmake/llvm")
 # find_package(LLVM REQUIRED 14)
 # llvm_map_components_to_libnames(llvm_all ${LLVM_TARGETS_TO_BUILD} Passes ExecutionEngine MCJIT)
@@ -38,6 +37,8 @@ set (cake_sources
   src/runtime/callable_object.cpp
   src/runtime/intern_function.cpp
 
+  src/nrt/object.cpp
+
   src/lib/io.cpp
   src/lib/math.cpp
 
@@ -49,6 +50,8 @@ include_directories(include
 
 
 add_library(CakeCore STATIC ${cake_sources})
+set_property(TARGET CakeCore PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+
 target_link_libraries(
   CakeCore 
   fmt::fmt 

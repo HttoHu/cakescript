@@ -35,13 +35,11 @@ public:
       auto operand = expr->eval();
       auto val = static_cast<IntegerObject *>(operand.get())->get_int();
       return new IntegerObject(-val);
-    }
-    else if constexpr (UOP == TokenKind::NOT) {
+    } else if constexpr (UOP == TokenKind::NOT) {
       auto operand = expr->eval();
       auto val = static_cast<IntegerObject *>(operand.get())->get_int();
       return new IntegerObject(!val);
-    }
-    else 
+    } else
       cake_runtime_error("unknown unary op");
   }
 
@@ -139,7 +137,8 @@ public:
   TmpObjectPtr eval() override {
     if constexpr (IS_GLO)
       return Memory::gmem.get_global(stac_pos);
-    return Memory::gmem.get_local(stac_pos);
+    else
+      return Memory::gmem.get_local(stac_pos);
   }
   ObjectBase *eval_with_create() override { return eval()->clone(); }
   ObjectBase **get_left_val() override {

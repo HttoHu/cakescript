@@ -19,6 +19,7 @@ add_executable(unit
   ./runtime/object_test.cpp
   ./runtime/expr_runtest.cpp
   ./runtime/obj_test2.cpp
+  ./nrt/string_test.cpp
 )
 target_link_libraries(unit 
   GTest::gtest_main
